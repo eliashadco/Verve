@@ -1,0 +1,25 @@
+{
+  "clinic": "Clinic Name",
+  "users": [
+    {
+      "email": "",
+      "role": "physio",
+      "first_name": "",
+      "last_name": ""
+    },
+    {
+      "email": "",
+      "role": "trainer",
+      "first_name": "",
+      "last_name": ""
+    },
+    {
+      "email": "",
+      "role": "client",
+      "first_name": "",
+      "last_name": "",
+      "physio_email": "",
+      "trainer_email": ""
+    }
+  ]
+}
