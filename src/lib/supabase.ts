@@ -21,14 +21,20 @@ const SUPABASE_ANON_KEY =
   (Constants.expoConfig?.extra as Record<string, string> | undefined)?.SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  const message =
+    '[Verve] Missing EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY. ' +
+    'Set them in your .env (dev) or as EAS build environment variables (release).';
+  if (!__DEV__) {
+    // Never ship a release build that silently points at a local emulator.
+    throw new Error(message);
+  }
   // eslint-disable-next-line no-console
-  console.warn(
-    '[Verve] Supabase env vars missing. Copy .env.example to .env and fill in EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY.',
-  );
+  console.warn(`${message} Falling back to a local Supabase instance for development only.`);
 }
 
 export const supabase = createClient<Database>(
-  SUPABASE_URL ?? 'http://localhost:54321',
+  // Localhost fallback is dev-only; release builds throw above before reaching here.
+  SUPABASE_URL ?? 'http://127.0.0.1:54321',
   SUPABASE_ANON_KEY ?? 'public-anon-key',
   {
     auth: {

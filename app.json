@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "lu.verve.app"
+      "bundleIdentifier": "lu.verve.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Verve needs access to your photos so you can set a profile picture.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "lu.verve.app",
@@ -34,6 +38,12 @@
       "expo-router",
       "expo-font",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Verve needs access to your photos so you can set a profile picture."
+        }
+      ],
       [
         "@sentry/react-native/expo",
         {

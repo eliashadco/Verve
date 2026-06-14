@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, parseISO } from 'date-fns';
@@ -79,27 +79,6 @@ function seedFallbackLoose(t: (key: string, opts?: Record<string, string | numbe
  * - Builder: Inline fully functional program builder.
  */
 export function ClientProgramsTabContent() {
-  if (Platform.OS === 'web') {
-    // Host of the "preview portal" (frontend Vite app). Configurable so deployed
-    // web builds can point at the real URL instead of the local dev server.
-    const previewUrl =
-      process.env.EXPO_PUBLIC_WORKOUT_PREVIEW_URL ?? 'http://localhost:5173/preview/patient';
-    return (
-      <View style={{ flex: 1, backgroundColor: '#050b14', minHeight: '100vh' as any }}>
-        <iframe
-          src={previewUrl}
-          style={{
-            width: '100%',
-            height: 'calc(100vh - 64px)', // Leave space for Expo bottom nav
-            border: 'none',
-            background: '#050b14',
-          }}
-          title="Workout Redesign Portal"
-        />
-      </View>
-    );
-  }
-
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ focusDay?: string | string[]; builderTab?: string | string[] }>();
