@@ -38,3 +38,39 @@ create policy members_insert on public.conversation_members
       )
     )
   );
+
+-- ── M1: profiles_select exposed EVERY trainer/physio row — including email,
+--        phone and push_token — to every authenticated user. The app never
+--        browses all practitioners; it only reads (a) your own profile,
+--        (b) linked clients/practitioners, and (c) people you share a chat with
+--        (for displaying names/avatars). Replace the blanket role exposure with
+--        a precise "shared conversation" allowance via a security-definer helper.
+create or replace function public.shares_conversation(other_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.conversation_members me
+    join public.conversation_members them
+      on them.conversation_id = me.conversation_id
+    where me.user_id   = auth.uid()
+      and them.user_id = other_user
+  )
+$$;
+
+drop policy if exists profiles_select on public.profiles;
+create policy profiles_select on public.profiles
+  for select using (
+    id = auth.uid()
+    or exists (
+      select 1 from public.practitioner_client_links l
+      where l.status = 'active'
+        and ((l.practitioner_id = auth.uid() and l.client_id = profiles.id)
+          or (l.client_id       = auth.uid() and l.practitioner_id = profiles.id))
+    )
+    or public.shares_conversation(profiles.id)
+  );
