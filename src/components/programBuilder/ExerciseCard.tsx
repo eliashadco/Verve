@@ -14,12 +14,16 @@ interface ExerciseCardProps {
   isDragging?: boolean;
   isExpanded?: boolean;
   constraints?: ClinicalConstraint[];
-  onLongPressDrag: () => void;
+  /** True when there is a following exercise this card can be supersetted with. */
+  canGroupWithNext?: boolean;
   onUpdateSets: (delta: number) => void;
   onUpdateReps: (delta: number) => void;
   onUpdateRir: (delta: number) => void;
   onToggleExpand: () => void;
   onUpdateField: (field: 'rest' | 'tempo' | 'weight' | 'notes' | 'warmup', value: any) => void;
+  onGroupWithNext?: () => void;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
 }
 
 export function ExerciseCard({
@@ -27,12 +31,15 @@ export function ExerciseCard({
   isDragging,
   isExpanded = false,
   constraints,
-  onLongPressDrag,
+  canGroupWithNext = false,
   onUpdateSets,
   onUpdateReps,
   onUpdateRir,
   onToggleExpand,
   onUpdateField,
+  onGroupWithNext,
+  onDuplicate,
+  onDelete,
 }: ExerciseCardProps) {
   const violations = constraints ? validate(exercise as any, constraints) : [];
   const primaryV = violations.length > 0 ? violations[0] : null;
@@ -72,11 +79,18 @@ export function ExerciseCard({
           )}
         </Pressable>
         <View style={styles.rightHeaderActions}>
-          <Pressable onPress={onToggleExpand} style={styles.expandToggle}>
-            <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textMuted} />
-          </Pressable>
-          <Pressable onLongPress={onLongPressDrag} delayLongPress={80} style={styles.handle}>
-            <Ionicons name="menu-outline" size={24} color={colors.textFaint} />
+          {onDuplicate && (
+            <Pressable onPress={onDuplicate} style={styles.headerIconBtn} hitSlop={6} accessibilityLabel="Duplicate exercise">
+              <Ionicons name="copy-outline" size={17} color={colors.textMuted} />
+            </Pressable>
+          )}
+          {onDelete && (
+            <Pressable onPress={onDelete} style={styles.headerIconBtn} hitSlop={6} accessibilityLabel="Delete exercise">
+              <Ionicons name="trash-outline" size={17} color={colors.danger} />
+            </Pressable>
+          )}
+          <Pressable onPress={onToggleExpand} style={styles.headerIconBtn}>
+            <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textMuted} />
           </Pressable>
         </View>
       </View>
@@ -156,6 +170,16 @@ export function ExerciseCard({
               numberOfLines={2}
             />
           </View>
+
+          {!exercise.groupId && canGroupWithNext && onGroupWithNext ? (
+            <View style={styles.groupRow}>
+              <Text style={styles.groupHint}>Group as superset with the next exercise?</Text>
+              <Pressable onPress={onGroupWithNext} style={styles.groupBtn} hitSlop={6}>
+                <Ionicons name="link-outline" size={14} color={colors.primary} />
+                <Text style={styles.groupBtnText}>Group</Text>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
       )}
     </View>
@@ -185,11 +209,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm,
     textTransform: 'uppercase',
   },
-  rightHeaderActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  expandToggle: { padding: 4 },
+  rightHeaderActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  headerIconBtn: { padding: 4 },
   name: { color: colors.textStrong, fontFamily: typography.family.bodyBold, fontSize: typography.size.base },
   muscle: { color: colors.textMuted, fontSize: typography.size.xs, textTransform: 'uppercase' },
-  handle: { padding: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   rpeCell: {
     flex: 1,
@@ -272,6 +295,26 @@ const styles = StyleSheet.create({
     minHeight: 50,
     textAlignVertical: 'top',
   },
+  groupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 2,
+  },
+  groupHint: { flex: 1, color: colors.textMuted, fontSize: 10 },
+  groupBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primaryDim,
+    borderRadius: radii.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  groupBtnText: { color: colors.primary, fontFamily: typography.family.bodyBold, fontSize: 11 },
 });
 
 

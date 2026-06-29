@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Badge } from '@/components/Badge';
 import { GlassCard } from '@/components/GlassCard';
@@ -15,14 +17,25 @@ export interface LiveSetRow {
 interface LiveExerciseCardProps {
   indexLabel: string;
   name: string;
-  meta: string;
+  /** e.g. "3 x 8-12 reps" */
+  prescription: string;
+  /** e.g. "3-1-2-0" */
+  tempo?: string | null;
+  /** e.g. 90 */
+  restSeconds?: number;
   notes?: string | null;
+  muscleTags?: string[];
   sets: LiveSetRow[];
+  totalSets: number;
+  /** Prescribed rep range shown on inactive rows, e.g. "8-12" */
+  prescribedReps?: string;
   onChangeSet: (setIndex: number, field: 'reps' | 'weight' | 'rir', value: string) => void;
   onToggleSetDone: (setIndex: number) => void;
   onAddSet: () => void;
   onCopyPreviousSet: () => void;
+  onCopySetValues: (setIndex: number) => void;
   onNextExercise: () => void;
+  onStartRest: () => void;
   restLabel?: string | null;
 }
 
@@ -34,68 +47,199 @@ export function calculateRpe(rir: number | null) {
 export function LiveExerciseCard({
   indexLabel,
   name,
-  meta,
+  prescription,
+  tempo,
+  restSeconds,
   notes,
+  muscleTags,
   sets,
+  totalSets,
+  prescribedReps,
   onChangeSet,
   onToggleSetDone,
   onAddSet,
   onCopyPreviousSet,
+  onCopySetValues,
   onNextExercise,
+  onStartRest,
   restLabel,
 }: LiveExerciseCardProps) {
+  const [expanded, setExpanded] = useState(true);
+  const completedSets = sets.filter((s) => s.done).length;
+
   return (
     <GlassCard style={styles.card}>
-      <View style={styles.header}>
+      {/* ── Header Row ── */}
+      <Pressable onPress={() => setExpanded(!expanded)} style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.index}>{indexLabel}</Text>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.meta}>{meta}</Text>
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.index}>{indexLabel}</Text>
+            <Text style={styles.name} numberOfLines={1}>{name}</Text>
+          </View>
+          {/* Muscle tags */}
+          {muscleTags && muscleTags.length > 0 && (
+            <View style={styles.tagRow}>
+              {muscleTags.map((tag) => (
+                <Badge key={tag} label={tag} tone="clinical" />
+              ))}
+            </View>
+          )}
+          {/* Meta row */}
+          <View style={styles.metaRow}>
+            {tempo ? (
+              <View style={styles.metaChip}>
+                <Ionicons name="time-outline" size={10} color={colors.textMuted} />
+                <Text style={styles.metaText}>Tempo {tempo}</Text>
+              </View>
+            ) : null}
+            {restSeconds ? (
+              <View style={styles.metaChip}>
+                <Ionicons name="hourglass-outline" size={10} color={colors.textMuted} />
+                <Text style={styles.metaText}>Rest {restSeconds}s</Text>
+              </View>
+            ) : null}
+            <Text style={styles.prescriptionText}>{prescription}</Text>
+          </View>
         </View>
-        {notes ? <Badge label={notes} tone="warning" /> : null}
-      </View>
+        <View style={styles.headerRight}>
+          <Text style={styles.progressCounter}>{completedSets}/{totalSets} sets</Text>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={16}
+            color={colors.textMuted}
+          />
+        </View>
+      </Pressable>
+
+      {/* Notes warning */}
+      {notes ? (
+        <View style={styles.notesRow}>
+          <Badge label={notes} tone="warning" />
+        </View>
+      ) : null}
+
+      {/* Rest timer */}
       {restLabel ? <Text style={styles.rest}>{restLabel}</Text> : null}
 
-      <View style={styles.tableHead}>
-        <Text style={[styles.tableCell, styles.setCol]}>Set</Text>
-        <Text style={styles.tableCell}>Kg</Text>
-        <Text style={styles.tableCell}>Reps</Text>
-        <Text style={styles.tableCell}>RIR</Text>
-        <Text style={styles.tableCell}>RPE</Text>
-        <Text style={[styles.tableCell, styles.logCol]}>Log</Text>
-      </View>
+      {/* ── Set Table (collapsible) ── */}
+      {expanded && (
+        <>
+          {/* Table header */}
+          <View style={styles.tableHead}>
+            <Text style={[styles.tableCell, styles.setCol]}>SET</Text>
+            <Text style={styles.tableCell}>KG</Text>
+            <Text style={styles.tableCell}>REPS</Text>
+            <Text style={[styles.tableCell, styles.narrowCol]}>RIR</Text>
+            <Text style={[styles.tableCell, styles.narrowCol]}>RPE</Text>
+            {tempo ? <Text style={styles.tableCell}>TEMPO</Text> : null}
+            <Text style={[styles.tableCell, styles.actionCol]}>ACTION</Text>
+          </View>
 
-      {sets.map((set, setIdx) => {
-        const rirNum = Number.parseInt(set.rir, 10);
-        const rpe = calculateRpe(Number.isNaN(rirNum) ? null : rirNum);
-        return (
-          <View key={setIdx} style={[styles.tableRow, set.done && styles.rowDone]}>
-            <Text style={[styles.tableCell, styles.setCol]}>{setIdx + 1}</Text>
-            <NumericCell value={set.weight} onChange={(v) => onChangeSet(setIdx, 'weight', v)} editable={!set.done} />
-            <NumericCell value={set.reps} onChange={(v) => onChangeSet(setIdx, 'reps', v)} editable={!set.done} />
-            <NumericCell value={set.rir} onChange={(v) => onChangeSet(setIdx, 'rir', v)} editable={!set.done} />
-            <Text style={styles.tableCell}>{rpe ?? '-'}</Text>
-            <Pressable onPress={() => onToggleSetDone(setIdx)} style={styles.logBtn}>
-              {set.done ? <Ionicons name="checkmark" size={14} color={colors.bgApp} /> : null}
+          {/* Set rows */}
+          {sets.map((set, setIdx) => {
+            const rirNum = Number.parseInt(set.rir, 10);
+            const rpe = calculateRpe(Number.isNaN(rirNum) ? null : rirNum);
+            const isActive = !set.done && (setIdx === 0 || sets[setIdx - 1]?.done);
+            const isInactive = !set.done && !isActive;
+
+            return (
+              <View key={setIdx} style={[styles.tableRow, set.done && styles.rowDone, isInactive && styles.rowInactive]}>
+                {/* Set number */}
+                <Text style={[styles.tableCell, styles.setCol, styles.setNum]}>{setIdx + 1}</Text>
+
+                {/* KG */}
+                {isActive || set.done ? (
+                  <NumericCell value={set.weight} onChange={(v) => onChangeSet(setIdx, 'weight', v)} editable={!set.done} placeholder="— ·" />
+                ) : (
+                  <Text style={[styles.tableCell, styles.inactiveText]}>—</Text>
+                )}
+
+                {/* REPS */}
+                {isActive || set.done ? (
+                  <NumericCell value={set.reps} onChange={(v) => onChangeSet(setIdx, 'reps', v)} editable={!set.done} placeholder={prescribedReps || '—'} />
+                ) : (
+                  <Text style={[styles.tableCell, styles.inactiveText]}>{prescribedReps || '—'}</Text>
+                )}
+
+                {/* RIR */}
+                {isActive ? (
+                  <Pressable style={styles.rirBtn}>
+                    <NumericCell value={set.rir} onChange={(v) => onChangeSet(setIdx, 'rir', v)} editable placeholder="RIR" />
+                  </Pressable>
+                ) : (
+                  <Text style={[styles.tableCell, styles.narrowCol, styles.inactiveText]}>
+                    {set.done && set.rir ? set.rir : '—'}
+                  </Text>
+                )}
+
+                {/* RPE (auto-computed) */}
+                <Text style={[styles.tableCell, styles.narrowCol, styles.inactiveText]}>
+                  {rpe ?? '—'}
+                </Text>
+
+                {/* TEMPO (optional column) */}
+                {tempo ? (
+                  <Text style={[styles.tableCell, styles.inactiveText]}>{tempo}</Text>
+                ) : null}
+
+                {/* ACTION column: copy + Log */}
+                <View style={[styles.actionCol, styles.actionGroup]}>
+                  {(isActive || set.done) ? (
+                    <>
+                      <Pressable
+                        onPress={() => onCopySetValues(setIdx)}
+                        style={styles.copyBtn}
+                        accessibilityLabel="Copy previous set"
+                      >
+                        <Ionicons name="copy-outline" size={12} color={colors.textMuted} />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => onToggleSetDone(setIdx)}
+                        style={[styles.logBtn, set.done && styles.logBtnDone]}
+                      >
+                        {set.done ? (
+                          <Ionicons name="checkmark" size={13} color={colors.bgApp} />
+                        ) : (
+                          <Text style={styles.logBtnText}>✓ Log</Text>
+                        )}
+                      </Pressable>
+                    </>
+                  ) : (
+                    <View style={styles.logBtnInactive}>
+                      <Text style={styles.logBtnInactiveText}>Log</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+
+          {/* Add Set */}
+          <Pressable onPress={onAddSet} style={styles.addSetBtn}>
+            <Ionicons name="add-circle-outline" size={14} color={colors.primary} />
+            <Text style={styles.addSetText}>Add Set</Text>
+          </Pressable>
+
+          {/* ── Bottom Action Bar ── */}
+          <View style={styles.bottomBar}>
+            <Pressable onPress={onStartRest} style={styles.restBtn}>
+              <Ionicons name="timer-outline" size={14} color={colors.textMain} />
+              <Text style={styles.restBtnText}>Rest {restSeconds || 90}s</Text>
+            </Pressable>
+            <Pressable onPress={onNextExercise}>
+              <LinearGradient
+                colors={[colors.primary, '#0ea5e9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.nextBtn}
+              >
+                <Text style={styles.nextBtnText}>Next Ex</Text>
+                <Ionicons name="arrow-forward" size={14} color={colors.bgApp} />
+              </LinearGradient>
             </Pressable>
           </View>
-        );
-      })}
-
-      <View style={styles.actions}>
-        <Pressable onPress={onCopyPreviousSet} style={styles.action}>
-          <Text style={styles.actionText}>Copy previous set</Text>
-        </Pressable>
-        <Pressable onPress={onAddSet} style={styles.action}>
-          <Text style={styles.actionText}>Add set</Text>
-        </Pressable>
-        <Pressable onPress={onNextExercise} style={styles.action}>
-          <Text style={styles.actionText}>Next exercise</Text>
-        </Pressable>
-        <View style={styles.actionDisabled}>
-          <Text style={styles.actionDisabledText}>Voice log (soon)</Text>
-        </View>
-      </View>
+        </>
+      )}
     </GlassCard>
   );
 }
@@ -104,10 +248,12 @@ function NumericCell({
   value,
   onChange,
   editable,
+  placeholder = '-',
 }: {
   value: string;
   onChange: (next: string) => void;
   editable: boolean;
+  placeholder?: string;
 }) {
   return (
     <TextInput
@@ -115,7 +261,7 @@ function NumericCell({
       onChangeText={onChange}
       editable={editable}
       keyboardType="numeric"
-      placeholder="-"
+      placeholder={placeholder}
       placeholderTextColor={colors.textFaint}
       style={[styles.input, !editable && styles.inputDisabled]}
     />
@@ -123,25 +269,64 @@ function NumericCell({
 }
 
 const styles = StyleSheet.create({
-  card: { gap: spacing.sm },
-  header: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
-  headerLeft: { flex: 1, gap: 2 },
+  card: { gap: 6, paddingBottom: 8 },
+
+  /* ── Header ── */
+  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  headerLeft: { flex: 1, gap: 4 },
+  headerRight: { alignItems: 'flex-end', gap: 4 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   index: { color: colors.primary, fontFamily: typography.family.bodyBold, fontSize: typography.size.xs },
-  name: { color: colors.textStrong, fontFamily: typography.family.bodyBold, fontSize: typography.size.base },
-  meta: { color: colors.textMuted, fontSize: typography.size.xs },
+  name: { color: colors.textStrong, fontFamily: typography.family.bodyBold, fontSize: typography.size.base, flex: 1 },
+  progressCounter: {
+    color: colors.textMuted,
+    fontFamily: typography.family.bodyMedium,
+    fontSize: typography.size.xs,
+  },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  metaChip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  metaText: { color: colors.textMuted, fontFamily: typography.family.body, fontSize: typography.size.xs },
+  prescriptionText: {
+    color: colors.textSub,
+    fontFamily: typography.family.bodySemi,
+    fontSize: typography.size.xs,
+    marginLeft: 'auto',
+  },
+
+  /* ── Notes ── */
+  notesRow: { paddingTop: 2 },
+
+  /* ── Rest ── */
   rest: { color: colors.primary, fontFamily: typography.family.bodyBold, fontSize: typography.size.xs },
-  tableHead: { flexDirection: 'row', alignItems: 'center' },
-  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
-  rowDone: { opacity: 0.6 },
+
+  /* ── Table ── */
+  tableHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+    paddingBottom: 6,
+    marginTop: 4,
+  },
+  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5 },
+  rowDone: { opacity: 0.5 },
+  rowInactive: { opacity: 0.4 },
   tableCell: {
     flex: 1,
     color: colors.textMuted,
     fontFamily: typography.family.bodyBold,
     fontSize: typography.size.xs,
     textAlign: 'center',
+    letterSpacing: 0.4,
   },
-  setCol: { flex: 0.7 },
-  logCol: { flex: 0.9 },
+  setCol: { flex: 0.5 },
+  narrowCol: { flex: 0.7 },
+  actionCol: { flex: 1.3 },
+  setNum: { color: colors.textSub, fontFamily: typography.family.bodySemi, fontSize: typography.size.sm },
+  inactiveText: { color: colors.textFaint, fontFamily: typography.family.body, fontSize: typography.size.sm },
+
+  /* ── Inputs ── */
   input: {
     flex: 1,
     backgroundColor: colors.surface2,
@@ -151,13 +336,28 @@ const styles = StyleSheet.create({
     color: colors.textStrong,
     fontSize: typography.size.sm,
     textAlign: 'center',
-    paddingVertical: 8,
-    marginHorizontal: 4,
+    paddingVertical: 7,
+    marginHorizontal: 3,
   },
   inputDisabled: { opacity: 0.5 },
+
+  rirBtn: { flex: 0.7 },
+
+  /* ── Action Column ── */
+  actionGroup: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  copyBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    backgroundColor: colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   logBtn: {
-    flex: 0.9,
-    marginHorizontal: 4,
+    flex: 1,
+    maxWidth: 60,
     height: 28,
     borderRadius: radii.pill,
     borderWidth: 1,
@@ -166,22 +366,83 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  action: {
-    borderWidth: 1,
-    borderColor: colors.borderDefault,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+  logBtnDone: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
-  actionText: { color: colors.primary, fontFamily: typography.family.bodyMedium, fontSize: typography.size.xs },
-  actionDisabled: {
+  logBtnText: {
+    color: colors.primary,
+    fontFamily: typography.family.bodyBold,
+    fontSize: 10,
+  },
+  logBtnInactive: {
+    flex: 1,
+    maxWidth: 60,
+    height: 28,
+    borderRadius: radii.pill,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    backgroundColor: colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.4,
+  },
+  logBtnInactiveText: {
+    color: colors.textFaint,
+    fontFamily: typography.family.body,
+    fontSize: 10,
+  },
+
+  /* ── Add Set ── */
+  addSetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+    marginTop: 2,
+  },
+  addSetText: { color: colors.primary, fontFamily: typography.family.bodyMedium, fontSize: typography.size.xs },
+
+  /* ── Bottom Action Bar ── */
+  bottomBar: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  restBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    height: 40,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.borderDefault,
     backgroundColor: colors.surface2,
   },
-  actionDisabledText: { color: colors.textFaint, fontFamily: typography.family.body, fontSize: typography.size.xs },
+  restBtnText: {
+    color: colors.textMain,
+    fontFamily: typography.family.bodyBold,
+    fontSize: typography.size.sm,
+  },
+  nextBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    height: 40,
+    borderRadius: radii.md,
+    minWidth: 130,
+    paddingHorizontal: 16,
+  },
+  nextBtnText: {
+    color: colors.bgApp,
+    fontFamily: typography.family.bodyBold,
+    fontSize: typography.size.sm,
+  },
 });

@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/AuthProvider';
 import { usePrograms } from '@/hooks/usePrograms';
+import { useActiveDraftStore } from '@/hooks/useActiveDraftStore';
 import { useTranslation } from '@/lib/i18n';
 import { colors, layout, radii, shadows, spacing, typography } from '@/lib/theme';
 
@@ -23,7 +24,14 @@ const TAB_ORDER: { name: string; icon: IconName }[] = [
 
 const LEFT_TAB_COUNT = 2;
 
-const MORE_ROUTES = new Set(['community', 'hub', 'messages', 'progress']);
+/** Routes surfaced from the center "more" cluster (Progress is now a primary tab). */
+const MORE_ROUTES = new Set(['community', 'hub', 'messages']);
+
+const MORE_ITEMS: { name: string; icon: IconName; labelKey: string }[] = [
+  { name: 'community', icon: 'people-outline', labelKey: 'tabs.client.community' },
+  { name: 'messages', icon: 'chatbubble-ellipses-outline', labelKey: 'tabs.client.messages' },
+  { name: 'hub', icon: 'grid-outline', labelKey: 'tabs.client.hub' },
+];
 
 /** Outer diameter of the Live FAB; half sits above the nav pill. */
 const LIVE_FAB_OUTER = 64;
@@ -33,6 +41,9 @@ export function UserTrialBottomNav({ state, descriptors, navigation }: BottomTab
   const { t } = useTranslation();
   const { profile } = useAuth();
   const { programs } = usePrograms(profile?.id ?? null, 'client');
+  const activeDraft = useActiveDraftStore((s) => s.activeDraft);
+  const isSessionActive = useActiveDraftStore((s) => s.isSessionActive);
+  const activeSessionRoute = useActiveDraftStore((s) => s.activeSessionRoute);
   const [moreOpen, setMoreOpen] = useState(false);
   const activeRoute = state.routes[state.index];
   const activeProgram = programs.find(
@@ -57,6 +68,17 @@ export function UserTrialBottomNav({ state, descriptors, navigation }: BottomTab
   };
 
   const goToLive = () => {
+    // If there's an in-progress session, resume it.
+    if (isSessionActive && activeSessionRoute) {
+      router.push(activeSessionRoute as Href);
+      return;
+    }
+    // If a draft is staged, launch its live session.
+    if (activeDraft && activeDraft.days.length > 0) {
+      router.push(`/(client)/live/${activeDraft.id}/0` as Href);
+      return;
+    }
+    // Fallback to assigned program.
     if (activeProgram) {
       router.push(`/(client)/live/${activeProgram.id}/0` as Href);
       return;
@@ -99,7 +121,13 @@ export function UserTrialBottomNav({ state, descriptors, navigation }: BottomTab
                 />
               ))}
               <NavItem
-                icon="ellipsis-horizontal"
+                icon="stats-chart-outline"
+                label={t('tabs.client.progress')}
+                active={activeRoute.name === 'progress'}
+                onPress={() => goTo('progress')}
+              />
+              <NavItem
+                icon="ellipsis-vertical"
                 label={t('tabs.client.more')}
                 active={moreHighlighted}
                 onPress={() => setMoreOpen((open) => !open)}
@@ -118,6 +146,10 @@ export function UserTrialBottomNav({ state, descriptors, navigation }: BottomTab
                   'Live',
               )}
             >
+              {/* Pulsing ring when a draft is staged or session is active */}
+              {(activeDraft || isSessionActive) && (
+                <View style={styles.liveFabPulse} />
+              )}
               <View style={styles.liveFabInner}>
                 <Ionicons name="radio" color={colors.textStrong} size={24} />
               </View>
@@ -128,36 +160,23 @@ export function UserTrialBottomNav({ state, descriptors, navigation }: BottomTab
 
       <Modal visible={moreOpen} transparent animationType="fade" onRequestClose={() => setMoreOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMoreOpen(false)}>
-          <Pressable style={styles.menuCard} onPress={() => undefined}>
+          <Pressable
+            style={[styles.menuCard, { marginBottom: Math.max(insets.bottom, spacing.sm) + layout.tabBarHeight + spacing.md }]}
+            onPress={() => undefined}
+          >
             <Text style={styles.menuTitle}>{t('tabs.client.moreMenuTitle')}</Text>
-            <Pressable
-              style={styles.menuRow}
-              onPress={() => pushSubRoute('/(client)/community')}
-            >
-              <Ionicons name="people-outline" size={20} color={colors.primary} />
-              <Text style={styles.menuRowLabel}>{t('tabs.client.community')}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.menuRow}
-              onPress={() => pushSubRoute('/(client)/progress')}
-            >
-              <Ionicons name="stats-chart-outline" size={20} color={colors.primary} />
-              <Text style={styles.menuRowLabel}>{t('tabs.client.progress')}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.menuRow}
-              onPress={() => pushSubRoute('/(client)/messages')}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.primary} />
-              <Text style={styles.menuRowLabel}>{t('tabs.client.messages')}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.menuRow}
-              onPress={() => pushSubRoute('/(client)/hub')}
-            >
-              <Ionicons name="grid-outline" size={20} color={colors.primary} />
-              <Text style={styles.menuRowLabel}>{t('tabs.client.hub')}</Text>
-            </Pressable>
+            {MORE_ITEMS.map((item, i) => (
+              <Pressable
+                key={item.name}
+                style={[styles.menuRow, i > 0 && styles.menuRowDivider]}
+                onPress={() => pushSubRoute(`/(client)/${item.name}` as Href)}
+                accessibilityRole="button"
+                accessibilityLabel={t(item.labelKey)}
+              >
+                <Ionicons name={item.icon} size={20} color={colors.primary} />
+                <Text style={styles.menuRowLabel}>{t(item.labelKey)}</Text>
+              </Pressable>
+            ))}
           </Pressable>
         </Pressable>
       </Modal>
@@ -285,14 +304,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderStrong,
   },
+  liveFabPulse: {
+    position: 'absolute',
+    width: LIVE_FAB_OUTER + 8,
+    height: LIVE_FAB_OUTER + 8,
+    borderRadius: radii.pill,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    opacity: 0.45,
+  },
   menuBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(2, 4, 8, 0.55)',
     justifyContent: 'flex-end',
-    paddingBottom: 100,
-    paddingHorizontal: spacing.lg,
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.md,
   },
   menuCard: {
+    minWidth: 180,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderDefault,
@@ -307,14 +336,16 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xs,
   },
   menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: spacing.md,
+  },
+  menuRowDivider: {
     borderTopWidth: 1,
     borderTopColor: colors.borderSubtle,
   },

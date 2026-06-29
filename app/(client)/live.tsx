@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '@/auth/AuthProvider';
+import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
 import { GlassCard } from '@/components/GlassCard';
 import { Header } from '@/components/Header';
@@ -11,6 +12,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { VerveButton } from '@/components/VerveButton';
 import { usePrograms } from '@/hooks/usePrograms';
 import { useConstraints } from '@/hooks/useConstraints';
+import { useActiveDraftStore } from '@/hooks/useActiveDraftStore';
 import { useTranslation } from '@/lib/i18n';
 import { colors, radii, spacing, typography, shadows } from '@/lib/theme';
 
@@ -20,6 +22,7 @@ export default function LiveSessionPicker() {
   const router = useRouter();
   const { programs, loading, refresh } = usePrograms(profile?.id ?? null, 'client');
   const constraints = useConstraints(profile?.id ?? null);
+  const activeDraft = useActiveDraftStore((s) => s.activeDraft);
 
   const active = programs.find((p) => p.status === 'active') ?? programs[0];
 
@@ -59,7 +62,33 @@ export default function LiveSessionPicker() {
       <Header title={t('livePicker.title')} />
       <Text style={styles.lead}>{t('livePicker.lead')}</Text>
 
-      {!active ? (
+      {/* Staged Draft Section */}
+      {activeDraft && activeDraft.days.length > 0 && (
+        <GlassCard style={{ gap: 12, borderLeftWidth: 3, borderLeftColor: colors.warning, backgroundColor: 'rgba(245, 158, 11, 0.04)' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.programName}>{activeDraft.name}</Text>
+            <Badge label="DRAFT" tone="warning" />
+          </View>
+          {activeDraft.days.map((day, dayIndex) => (
+            <Pressable
+              key={dayIndex}
+              onPress={() => handleOpenReadiness(dayIndex)}
+              style={styles.dayBtn}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dayLabel}>{t('livePicker.day', { n: String(dayIndex + 1) })}</Text>
+                <Text style={styles.dayTitle}>{day.label}</Text>
+                <Text style={styles.dayMeta}>
+                  {t('livePicker.exerciseCount', { count: String(day.exercises.length) })}
+                </Text>
+              </View>
+              <Ionicons name="play-circle" size={28} color={colors.warning} />
+            </Pressable>
+          ))}
+        </GlassCard>
+      )}
+
+      {!active && !activeDraft ? (
         <GlassCard>
           <EmptyState
             icon="barbell-outline"

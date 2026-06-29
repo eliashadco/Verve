@@ -138,13 +138,13 @@ const styles = StyleSheet.create({
   statBox: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   statVal: {
     color: colors.textStrong,
     fontFamily: typography.family.heading,
     fontSize: typography.size.md,
-    marginTop: 2,
+    marginTop: spacing.xxs || 2,
   },
   statLabel: {
     color: colors.textMuted,

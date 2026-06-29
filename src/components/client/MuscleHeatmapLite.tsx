@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { GlassCard } from '@/components/GlassCard';
 import { useTranslation } from '@/lib/i18n';
-import { colors, spacing, typography } from '@/lib/theme';
+import { colors, spacing, typography, radii } from '@/lib/theme';
 import { toMuscleKey, getMuscleLabel } from '@/lib/programBuilder/muscles';
 import { computeVolumeMap } from '@/lib/programBuilder/volume';
 
@@ -51,7 +51,7 @@ export function MuscleHeatmapLite({
 
     if (completed === 0 && planned > 0) {
       return {
-        color: 'rgba(16, 185, 129, 0.25)', // Semi-transparent green (planned only)
+        color: colors.primaryDim, // Semi-transparent green (planned only)
         label: t('userTrial.programs.statusPlanned') || 'Planned Only',
         status: 'planned',
       };
@@ -189,7 +189,7 @@ export function MuscleHeatmapLite({
       {/* Legend indicator strip */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: 'rgba(16, 185, 129, 0.25)' }]} />
+          <View style={[styles.legendDot, { backgroundColor: colors.primaryDim }]} />
           <Text style={styles.legendLabel}>{t('userTrial.programs.legendPlanned') || 'Planned (0 done)'}</Text>
         </View>
         <View style={styles.legendItem}>
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   muscleCard: {
     flexDirection: 'row',
@@ -320,9 +320,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface2,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    borderRadius: radii.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
   muscleInfo: {
     flex: 1,
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   statusDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: radii.pill,
     marginLeft: 6,
   },
   emptyText: {
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   legendDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: radii.pill,
   },
   legendLabel: {
     color: colors.textMuted,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(2, 4, 8, 0.85)',
+    backgroundColor: colors.bgOverlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.md,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgElevated,
     borderWidth: 1,
     borderColor: colors.borderDefault,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
   },
   modalHeader: {
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface2,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    borderRadius: 10,
+    borderRadius: radii.md,
     padding: spacing.sm,
     alignItems: 'center',
     gap: 4,
@@ -449,9 +449,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.surface3,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     padding: spacing.sm,
-    marginBottom: 6,
+    marginBottom: spacing.xs,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },

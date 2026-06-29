@@ -23,7 +23,9 @@ export function DayTabs({ days, selectedIndex, onSelect, onAddDay }: DayTabsProp
           onPress={() => onSelect(idx)}
           style={[styles.tab, selectedIndex === idx && styles.tabActive]}
         >
-          <Text style={[styles.tabText, selectedIndex === idx && styles.tabTextActive]}>{day.label}</Text>
+          <Text style={[styles.tabText, selectedIndex === idx && styles.tabTextActive]}>
+            {day.label.split(' — ')[0]}
+          </Text>
         </TouchableOpacity>
       ))}
       <TouchableOpacity onPress={onAddDay} style={styles.addTab}>

@@ -213,7 +213,22 @@ export type ConstraintEventType =
   | 'cleared'
   | 'delivered'
   | 'enforced'
-  | 'acknowledged';
+  | 'acknowledged'
+  | 'pain_reported';
+
+export type PainMarkerContext = 'live_session' | 'post_session' | 'standalone';
+
+export interface PainMarker {
+  id: string;
+  client_id: string;
+  pain_score: number;
+  body_region: string | null;
+  context: PainMarkerContext;
+  exercise_id: string | null;
+  program_id: string | null;
+  notes: string | null;
+  created_at: string;
+}
 
 export interface ConstraintEvent {
   id: string;
@@ -305,6 +320,12 @@ export interface Database {
         Row: DbRow<ConstraintEvent>;
         Insert: WithInsert<ConstraintEvent>;
         Update: WithUpdate<ConstraintEvent>;
+        Relationships: [];
+      };
+      pain_markers: {
+        Row: DbRow<PainMarker>;
+        Insert: WithInsert<PainMarker>;
+        Update: WithUpdate<PainMarker>;
         Relationships: [];
       };
     };

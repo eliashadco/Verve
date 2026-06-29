@@ -196,6 +196,18 @@ export default function ClientHome() {
         </GlassCard>
       )}
       <View style={styles.quickLinks}>
+        <Link href="/(client)/live-session" asChild>
+          <Pressable style={styles.quickLink}>
+            <GlassCard style={styles.quickCard} padding={14}>
+              <Ionicons name="play-circle-outline" size={20} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.quickTitle}>Start Live Session</Text>
+                <Text style={styles.quickBody}>Jump right into your workout</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+            </GlassCard>
+          </Pressable>
+        </Link>
         <Link href="/(client)/programs" asChild>
           <Pressable style={styles.quickLink}>
             <GlassCard style={styles.quickCard} padding={14}>

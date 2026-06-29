@@ -52,6 +52,8 @@ export interface BuilderState {
   updateExerciseProperty: (dayIndex: number, exerciseId: string, field: 'sets' | 'reps' | 'targetRIR' | 'rest' | 'tempo' | 'weight' | 'notes' | 'warmup', deltaOrValue: any) => void;
   duplicateExercise: (dayIndex: number, exerciseId: string) => void;
   reorderExercises: (dayIndex: number, exercises: BuilderExercise[]) => void;
+  groupExerciseWithNext: (dayIndex: number, exerciseId: string) => boolean;
+  ungroupSuperset: (dayIndex: number, groupId: string) => void;
   adjustMuscleTarget: (muscle: string, delta: number) => void;
   addTrainingDay: () => boolean;
 }
@@ -236,6 +238,44 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   reorderExercises: (dayIndex, exercises) => set((state) => {
     const days = state.program.days.map((d, dIdx) => (dIdx === dayIndex ? { ...d, exercises } : d));
+    return { program: normalizeProgramForBuilder({ ...state.program, days } as Record<string, unknown>, state.resolver) };
+  }),
+
+  groupExerciseWithNext: (dayIndex, exerciseId) => {
+    let grouped = false;
+    set((state) => {
+      const day = state.program.days[dayIndex];
+      if (!day) return state;
+      const idx = day.exercises.findIndex((e) => e.id === exerciseId);
+      // Requires an adjacent succeeding exercise to pair with.
+      if (idx === -1 || idx === day.exercises.length - 1) return state;
+      const ex1 = day.exercises[idx];
+      const ex2 = day.exercises[idx + 1];
+      // Reuse an existing group id if either side already belongs to a superset.
+      const groupId = ex1.groupId || ex2.groupId || createId('superset');
+      grouped = true;
+      const days = state.program.days.map((d, dIdx) => {
+        if (dIdx !== dayIndex) return d;
+        return {
+          ...d,
+          exercises: d.exercises.map((ex) =>
+            ex.id === ex1.id || ex.id === ex2.id ? { ...ex, groupId } : ex,
+          ),
+        };
+      });
+      return { program: normalizeProgramForBuilder({ ...state.program, days } as Record<string, unknown>, state.resolver) };
+    });
+    return grouped;
+  },
+
+  ungroupSuperset: (dayIndex, groupId) => set((state) => {
+    const days = state.program.days.map((d, dIdx) => {
+      if (dIdx !== dayIndex) return d;
+      return {
+        ...d,
+        exercises: d.exercises.map((ex) => (ex.groupId === groupId ? { ...ex, groupId: null } : ex)),
+      };
+    });
     return { program: normalizeProgramForBuilder({ ...state.program, days } as Record<string, unknown>, state.resolver) };
   }),
 

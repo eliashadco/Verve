@@ -13,11 +13,14 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { GlassCard } from '@/components/GlassCard';
 import { useTranslation } from '@/lib/i18n';
-import { colors, spacing, typography } from '@/lib/theme';
+import { toMuscleKey } from '@/lib/programBuilder/muscles';
+import { colors, spacing, typography, radii } from '@/lib/theme';
 
 interface WorkoutDayCarouselProps {
   days: any[];
   activeIndex: number;
+  /** Muscle target map: { muscleKey: targetSets }. Used to compute progress bar fill. */
+  targetMap?: Record<string, number>;
   onPressDay: (index: number) => void;
   onStartSession: (index: number) => void;
 }
@@ -25,6 +28,7 @@ interface WorkoutDayCarouselProps {
 export function WorkoutDayCarousel({
   days,
   activeIndex,
+  targetMap,
   onPressDay,
   onStartSession,
 }: WorkoutDayCarouselProps) {
@@ -70,6 +74,22 @@ export function WorkoutDayCarousel({
     // Extract unique muscles for this day
     const muscles = Array.from(new Set(exercises.map((e: any) => e.muscle).filter(Boolean))) as string[];
 
+    // Compute planned sets per muscle for this day
+    const dayMuscleSets: Record<string, number> = {};
+    exercises.forEach((ex: any) => {
+      const contribs = ex._muscleContributions ?? {};
+      const contribKeys = Object.keys(contribs);
+      if (contribKeys.length > 0) {
+        contribKeys.forEach((rawKey) => {
+          const key = toMuscleKey(rawKey) ?? rawKey;
+          dayMuscleSets[key] = (dayMuscleSets[key] || 0) + (ex.sets || 0);
+        });
+      } else if (ex.muscle) {
+        const key = toMuscleKey(ex.muscle) ?? ex.muscle?.toLowerCase?.() ?? ex.muscle;
+        if (key) dayMuscleSets[key] = (dayMuscleSets[key] || 0) + (ex.sets || 0);
+      }
+    });
+
     return (
       <View style={[styles.cardContainer, { width: cardWidth }]}>
         <GlassCard style={[styles.dayCard, activeIndex === index && styles.dayCardActive]}>
@@ -93,14 +113,20 @@ export function WorkoutDayCarousel({
           {/* Thin progress bars/indicators for target muscles */}
           {muscles.length > 0 && (
             <View style={styles.musclesProgressRow}>
-              {muscles.map((muscle) => (
-                <View key={muscle} style={styles.muscleBarContainer}>
-                  <Text style={styles.muscleBarLabel} numberOfLines={1}>{muscle}</Text>
-                  <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBarFill, { width: '80%' }]} />
+              {muscles.map((muscle) => {
+                const muscleKey = toMuscleKey(muscle) ?? muscle?.toLowerCase?.() ?? muscle;
+                const planned = dayMuscleSets[muscleKey] || 0;
+                const target = targetMap?.[muscleKey] || 0;
+                const pct = target > 0 ? Math.min(100, Math.round((planned / target) * 100)) : (planned > 0 ? 100 : 0);
+                return (
+                  <View key={muscle} style={styles.muscleBarContainer}>
+                    <Text style={styles.muscleBarLabel} numberOfLines={1}>{muscle}</Text>
+                    <View style={styles.progressBarBg}>
+                      <View style={[styles.progressBarFill, { width: `${pct}%` }]} />
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
 
@@ -177,7 +203,7 @@ export function WorkoutDayCarousel({
         decelerationRate="fast"
         contentContainerStyle={[
           styles.flatListContent,
-          { paddingHorizontal: 16 },
+          { paddingHorizontal: spacing.md },
         ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
@@ -196,7 +222,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.sm,
   },
   flatListContent: {
-    gap: 12,
+    gap: spacing.sm,
   },
   cardContainer: {
     paddingVertical: 4,
@@ -207,10 +233,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
+    borderRadius: radii.md,
   },
   dayCardActive: {
     borderColor: colors.primaryBorder,
-    backgroundColor: 'rgba(16, 185, 129, 0.03)',
+    backgroundColor: colors.primaryDim,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -231,13 +258,13 @@ const styles = StyleSheet.create({
   activeDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: radii.pill,
     backgroundColor: colors.primary,
   },
   musclesProgressRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
     marginVertical: 4,
   },
   muscleBarContainer: {
@@ -274,12 +301,12 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: 1,
     borderColor: colors.primaryBorder,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     backgroundColor: colors.primaryDim,
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   btnSecondaryActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    backgroundColor: colors.primaryDim,
   },
   btnSecondaryText: {
     color: colors.primary,
@@ -292,9 +319,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     backgroundColor: colors.primary,
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   btnPrimaryText: {
     color: colors.bgApp,
@@ -325,7 +352,7 @@ const styles = StyleSheet.create({
   exerciseNumberWrap: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: radii.pill,
     backgroundColor: colors.surfaceHover,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { GlassCard } from '@/components/GlassCard';
 import { Header } from '@/components/Header';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { BuilderAiStatsPanel } from '@/components/client/BuilderAiStatsPanel';
+import { DraftActiveBanner } from '@/components/client/DraftActiveBanner';
 import { MuscleHeatmapLite } from '@/components/client/MuscleHeatmapLite';
 import { ProgramCurrentHero } from '@/components/client/ProgramCurrentHero';
 import { ProgramForecast } from '@/components/client/ProgramForecast';
@@ -23,15 +24,18 @@ import { usePrograms } from '@/hooks/usePrograms';
 import { useProgramBuilder } from '@/hooks/useProgramBuilder';
 import { useProgressStats } from '@/hooks/useProgressStats';
 import { useAdherence } from '@/hooks/useAdherence';
+import { useActiveDraftStore } from '@/hooks/useActiveDraftStore';
 import { computeHeroForecast, computeHeroGamification, computeLowAdherenceDayIndex } from '@/lib/programHeroModel';
 import {
   loadSavedProgramLibrary,
   saveSavedProgramLibrary,
   setActiveProgramId,
 } from '@/lib/programBuilder/peripheralBuilderStorage';
+import { draftToProgram } from '@/lib/programBuilder/draftToProgram';
 import type { BuilderProgram } from '@/lib/programBuilder/types';
+import { createId } from '@/lib/programBuilder/utils';
 import { useTranslation } from '@/lib/i18n';
-import { colors, typography } from '@/lib/theme';
+import { colors, radii, spacing, typography } from '@/lib/theme';
 
 export interface BuilderDraft {
   id: string;
@@ -93,6 +97,23 @@ export function ClientProgramsTabContent() {
   const [activeTab, setActiveTab] = useState<'current' | 'saved' | 'builder'>('current');
   const [hasAutoRouted, setHasAutoRouted] = useState(false);
 
+  // Active draft store: a staged draft that replaces the Current tab display.
+  const activeDraft = useActiveDraftStore((s) => s.activeDraft);
+  const draftSourceId = useActiveDraftStore((s) => s.sourceDraftId);
+  const setActiveDraftInStore = useActiveDraftStore((s) => s.setActiveDraft);
+  const clearActiveDraft = useActiveDraftStore((s) => s.clearActiveDraft);
+
+  /** Load a saved draft as the active program on the Current tab. */
+  const promoteDraftToCurrent = useCallback(
+    (draft: BuilderDraft) => {
+      const converted = draftToProgram(draft.program, profile?.id ?? 'local');
+      setActiveDraftInStore(converted, draft.id);
+      setActiveTab('current');
+      setActiveDayIndex(0);
+    },
+    [profile?.id, setActiveDraftInStore],
+  );
+
   const builderFallbackLoose = useMemo(() => seedFallbackLoose(t), [t]);
   const builderDraft = useProgramBuilder({ fallbackLoose: builderFallbackLoose });
 
@@ -118,9 +139,11 @@ export function ClientProgramsTabContent() {
     ).catch(() => {});
   }, [savedDrafts, savedLibraryReady]);
 
-  const currentProgram = useMemo(() => {
+  // If a draft is staged, it becomes the "current" program for UI purposes.
+  const assignedProgram = useMemo(() => {
     return programs.find((program) => ['active', 'paused'].includes(program.status)) ?? null;
   }, [programs]);
+  const currentProgram = activeDraft ?? assignedProgram;
 
   const pastPrograms = useMemo(() => {
     return programs.filter((program) => ['completed', 'archived'].includes(program.status));
@@ -185,6 +208,29 @@ export function ClientProgramsTabContent() {
     : t('userTrial.programs.lastUsedNone');
   const currentStreak = getProgramStreak(currentHistory);
   const bestStreak = Math.max(currentStreak, currentHistory.length);
+
+  const handleSavePlanFromBuilder = useCallback(
+    (program: BuilderProgram) => {
+      const name = (program.name || '').trim();
+      setSavedDrafts((prev) => {
+        const idx = prev.findIndex((d) => d.program.name.trim().toLowerCase() === name.toLowerCase());
+        const card: BuilderDraft = { id: idx >= 0 ? prev[idx].id : program.id || createId('tpl'), program };
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = card;
+          return next;
+        }
+        return [card, ...prev];
+      });
+      setActiveTab('saved');
+      Alert.alert(
+        t('alerts.success'),
+        t('userTrial.programs.planSavedToTemplates', { name: name || t('userTrial.programs.builderDraftDefault') }) ||
+          'Plan saved to your templates.',
+      );
+    },
+    [t],
+  );
 
   const onRemoveSavedDraft = (cardId: string) => {
     Alert.alert(t('userTrial.programs.confirmRemoveSavedProgramTitle'), t('userTrial.programs.confirmRemoveSavedProgramBody'), [
@@ -258,12 +304,32 @@ export function ClientProgramsTabContent() {
       {/* Current Tab content */}
       {activeTab === 'current' && (
         <>
+          {/* Draft Active Banner — shown when a local draft is staged */}
+          {activeDraft && (
+            <DraftActiveBanner
+              draftName={activeDraft.name}
+              daysCount={activeDraft.days.length}
+              exercisesCount={activeDraft.days.reduce((sum, d) => sum + d.exercises.length, 0)}
+              onEditInBuilder={() => {
+                // Find the matching saved draft and load it into the builder
+                const matchingDraft = savedDrafts.find((d) => d.id === draftSourceId);
+                if (matchingDraft) {
+                  builderDraft.replaceProgram(matchingDraft.program);
+                }
+                setActiveTab('builder');
+              }}
+              onDismiss={() => {
+                clearActiveDraft();
+              }}
+            />
+          )}
+
           <ClinicalSafetyNotice clientId={profile?.id ?? null} />
 
           {currentProgram && summary ? (
             <>
               <ProgramCurrentHero
-                kicker={t('userTrial.programs.currentFitnessPlan')}
+                kicker={activeDraft ? (t('userTrial.programs.draftPreviewKicker') || 'Draft Preview') : t('userTrial.programs.currentFitnessPlan')}
                 name={currentProgram.name}
                 meta={t('userTrial.programs.phaseMeta', {
                   focus: currentProgram.focus ?? t('userTrial.programs.generalFallback'),
@@ -287,6 +353,7 @@ export function ClientProgramsTabContent() {
                 <WorkoutDayCarousel
                   days={currentProgram.days}
                   activeIndex={activeDayIndex}
+                  targetMap={currentProgram.targets ?? undefined}
                   onPressDay={setActiveDayIndex}
                   onStartSession={(index) => {
                     router.push({
@@ -306,9 +373,15 @@ export function ClientProgramsTabContent() {
                     onAutoBalance={() => Alert.alert(t('userTrial.programs.autoBalance'), t('userTrial.programs.balancePreviewBody'))}
                     onSuggestProgression={() => Alert.alert(t('userTrial.programs.suggestProgression'), t('userTrial.programs.progressionPreviewBody'))}
                     onUseDraft={() => {
-                      const draftLocal = savedDrafts[0];
-                      setStagedDraftId(draftLocal?.id ?? null);
-                      Alert.alert(t('userTrial.programs.draftStagedTitle'), t('userTrial.programs.draftStagedBody'));
+                      if (savedDrafts.length === 0) {
+                        Alert.alert(
+                          t('userTrial.programs.noLocalDrafts') || 'No Saved Templates',
+                          t('userTrial.programs.createDraftHint') || 'Use the builder to create templates first.'
+                        );
+                        return;
+                      }
+                      // Load the first saved draft as the current program
+                      promoteDraftToCurrent(savedDrafts[0]);
                     }}
                   />
                 ) : null}
@@ -375,7 +448,7 @@ export function ClientProgramsTabContent() {
           )}
 
           {!currentProgram && assignedPrograms.length === 0 ? (
-            <GlassCard style={{ gap: 8, padding: 16, alignItems: 'center' }}>
+            <GlassCard style={{ gap: spacing.sm, padding: spacing.md, alignItems: 'center' }}>
               <Ionicons name="barbell-outline" size={36} color={colors.primary} />
               <Text style={[styles.builderTitle, { textAlign: 'center', marginTop: 4 }]}>
                 {t('userTrial.programs.noActiveProgram') || 'No Active Program'}
@@ -468,7 +541,7 @@ export function ClientProgramsTabContent() {
           </View>
 
           {savedDrafts.length === 0 ? (
-            <GlassCard style={{ gap: 8, padding: 16, alignItems: 'center' }}>
+            <GlassCard style={{ gap: spacing.sm, padding: spacing.md, alignItems: 'center' }}>
               <Ionicons name="folder-open-outline" size={36} color={colors.textMuted} />
               <Text style={[styles.builderTitle, { textAlign: 'center', marginTop: 4 }]}>
                 {t('userTrial.programs.noLocalDrafts') || 'No Saved Templates'}
@@ -488,7 +561,7 @@ export function ClientProgramsTabContent() {
               {savedDrafts.map((draft) => (
                 <GlassCard key={draft.id} variant="glass" style={styles.verticalDraftCard}>
                   <View style={styles.draftCardHeader}>
-                    <View style={{ flex: 1, gap: 4 }}>
+                    <View style={{ flex: 1, gap: spacing.xs }}>
                       <Text style={styles.verticalDraftCardTitle} numberOfLines={1}>
                         {draft.program.name}
                       </Text>
@@ -507,13 +580,21 @@ export function ClientProgramsTabContent() {
                     <Pressable
                       style={styles.draftCardBtn}
                       onPress={() => {
+                        promoteDraftToCurrent(draft);
+                      }}
+                    >
+                      <Ionicons name="play-outline" size={14} color={colors.primary} />
+                      <Text style={styles.draftCardBtnText}>{t('userTrial.programs.useDraft') || 'Use Draft'}</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.draftCardBtn}
+                      onPress={() => {
                         builderDraft.replaceProgram(draft.program);
                         setActiveTab('builder');
-                        Alert.alert(t('userTrial.programs.useDraft') || 'Loaded', t('userTrial.programs.draftLoadedBody') || 'Draft loaded into builder.');
                       }}
                     >
                       <Ionicons name="create-outline" size={14} color={colors.primary} />
-                      <Text style={styles.draftCardBtnText}>{t('userTrial.programs.useDraft') || 'Edit Template'}</Text>
+                      <Text style={styles.draftCardBtnText}>{t('userTrial.programs.editTemplate') || 'Edit'}</Text>
                     </Pressable>
                     <Pressable
                       style={[styles.draftCardBtn, styles.draftCardBtnDanger]}
@@ -551,7 +632,7 @@ export function ClientProgramsTabContent() {
       {/* Builder Tab content */}
       {activeTab === 'builder' && (
         <View style={styles.builderTabWrapper}>
-          <ProgramBuilderShell embedded role="client" />
+          <ProgramBuilderShell embedded role="client" onSavePlan={handleSavePlanFromBuilder} />
         </View>
       )}
     </ScreenContainer>
@@ -574,9 +655,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 20,
-    marginBottom: 8,
-    gap: 8,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   sectionTitle: {
     color: colors.textStrong,
@@ -594,9 +675,9 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: 1,
     borderColor: colors.primaryBorder,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     backgroundColor: colors.primaryDim,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
   },
   sectionActionText: {
@@ -620,9 +701,9 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: 1,
     borderColor: colors.primaryBorder,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     backgroundColor: colors.primaryDim,
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 6,
   },
   draftCardBtnDanger: {
@@ -654,18 +735,18 @@ const styles = StyleSheet.create({
   prescriptionRow: {
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    borderRadius: 10,
+    borderRadius: radii.md,
     backgroundColor: colors.surface2,
-    padding: 10,
+    padding: spacing.sm,
   },
   prescriptionName: { color: colors.textStrong, fontFamily: typography.family.bodyBold, fontSize: typography.size.sm },
   actionBtn: {
     borderWidth: 1,
     borderColor: colors.primaryBorder,
-    borderRadius: 10,
+    borderRadius: radii.md,
     backgroundColor: colors.primaryDim,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
   },
   actionText: { color: colors.primary, fontFamily: typography.family.bodyBold, fontSize: typography.size.xs },
   
@@ -675,17 +756,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface2,
     borderColor: colors.borderDefault,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: 4,
     gap: 4,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   segment: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.sm,
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -708,9 +789,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   verticalDraftCard: {
-    padding: 16,
-    gap: 12,
-    borderRadius: 12,
+    padding: spacing.md,
+    gap: spacing.sm,
+    borderRadius: radii.md,
   },
   verticalDraftCardTitle: {
     color: colors.textStrong,

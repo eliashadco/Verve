@@ -5,7 +5,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,12 +19,15 @@ import { Badge } from '@/components/Badge';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ExerciseDetailSheet } from '@/features/exercise/ExerciseDetailSheet';
 import { LiveExerciseCard } from '@/features/live/LiveExerciseCard';
+import { LiveConstraintBanner } from '@/features/live/LiveConstraintBanner';
 import { LiveMuscleLoadPanel } from '@/features/live/LiveMuscleLoadPanel';
 import { LiveSessionHeader } from '@/features/live/LiveSessionHeader';
 import { SubjectiveFeedbackCard } from '@/features/live/SubjectiveFeedbackCard';
 import { useExercises } from '@/hooks/useExercises';
-import { finishWorkout } from '@/hooks/useAdherence';
 import { usePrograms } from '@/hooks/usePrograms';
+import { useConstraints } from '@/hooks/useConstraints';
+import { useActiveDraftStore } from '@/hooks/useActiveDraftStore';
+import { emitPainMarker } from '@/lib/painMarkers';
 import { useTranslation } from '@/lib/i18n';
 import { colors, radii, typography } from '@/lib/theme';
 import type { Program, AdherenceLogExercise, Exercise } from '@/types/database';
@@ -56,12 +58,19 @@ export default function LiveSession() {
   const programsQuery = usePrograms(profile?.id ?? null, 'client');
 
   const [busy, setBusy] = useState(false);
+  const [paused, setPaused] = useState(false);
   const startedAtRef = useRef<string>(new Date().toISOString());
   const [logs, setLogs] = useState<Record<number, SetLog[]>>({});
   const [restTimers, setRestTimers] = useState<Record<number, RestTimerState>>({});
   const restIntervalsRef = useRef<Record<number, ReturnType<typeof setInterval> | null>>({});
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
+
+  const activeDraft = useActiveDraftStore((s) => s.activeDraft);
+  const clearActiveSession = useActiveDraftStore((s) => s.endSession);
+
+  // Constraints
+  const { data: constraints } = useConstraints(profile?.id ?? null);
 
   // Initialize painScore based on pre-session soreness
   const initialPainScore = useMemo(() => {
@@ -72,18 +81,18 @@ export default function LiveSession() {
   }, [preSoreness]);
 
   const [painScore, setPainScore] = useState(initialPainScore);
-
-  // Initialize notes with energy feedback if present
   const [subjectiveNotes, setSubjectiveNotes] = useState(
     preEnergy ? `Pre-session energy level: ${preEnergy}/10. Soreness: ${preSoreness ?? 'none'}.` : ''
   );
+  /** Guards against re-sending the pain marker for the same exercise within one session. */
+  const [painMarkerSent, setPainMarkerSent] = useState(false);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  const program = useMemo<Program | null>(
-    () => programsQuery.programs.find((candidate) => candidate.id === programId) ?? null,
-    [programsQuery.programs, programId],
-  );
+  const program = useMemo<Program | null>(() => {
+    if (activeDraft && activeDraft.id === programId) return activeDraft;
+    return programsQuery.programs.find((candidate) => candidate.id === programId) ?? null;
+  }, [programsQuery.programs, programId, activeDraft]);
 
   const day = program?.days?.[dayIndex];
 
@@ -104,14 +113,16 @@ export default function LiveSession() {
     setLogs(initial);
   }, [day]);
 
+  // Elapsed timer (respects pause)
   useEffect(() => {
+    if (paused) return;
     const tick = setInterval(() => {
       const startedAt = startedAtRef.current;
       const next = Math.max(0, Math.round((Date.now() - new Date(startedAt).getTime()) / 1000));
       setElapsedSeconds(next);
     }, 1000);
     return () => clearInterval(tick);
-  }, []);
+  }, [paused]);
 
   useEffect(() => {
     return () => {
@@ -125,6 +136,68 @@ export default function LiveSession() {
   const { exercises } = useExercises(exerciseIds);
 
   const exFallback = t('common.exercise');
+
+  // ── Computed values for load panel ──
+  const totalVolumeKg = useMemo(() => {
+    let vol = 0;
+    Object.entries(logs).forEach(([, sets]) => {
+      sets.forEach((s) => {
+        if (s.done) {
+          const r = parseInt(s.reps, 10);
+          const w = parseFloat(s.weight);
+          if (!Number.isNaN(r) && !Number.isNaN(w)) vol += r * w;
+        }
+      });
+    });
+    return Math.round(vol);
+  }, [logs]);
+
+  const muscleLoadRows = useMemo(() => {
+    if (!day) return [];
+    const targets: Record<string, number> = {};
+    const completed: Record<string, number> = {};
+
+    day.exercises.forEach((ex, idx) => {
+      const def = exercises[ex.exerciseId];
+      const totalSets = ex.sets ?? 3;
+      const doneSets = (logs[idx] ?? []).filter((s) => s.done).length;
+      (def?.primary_muscles ?? []).forEach((m) => {
+        const contrib = m.contribution ?? 1;
+        targets[m.muscle] = (targets[m.muscle] ?? 0) + totalSets * contrib;
+        completed[m.muscle] = (completed[m.muscle] ?? 0) + doneSets * contrib;
+      });
+    });
+
+    return Object.entries(targets)
+      .map(([muscle, target]) => ({
+        muscle,
+        percent: target > 0 ? Math.round(((completed[muscle] ?? 0) / target) * 100) : 0,
+      }))
+      .slice(0, 6);
+  }, [day, exercises, logs]);
+
+  // Readiness percentage from pain score
+  const readinessPercent = useMemo(() => {
+    return Math.max(0, Math.min(100, Math.round(100 - (painScore * 10))));
+  }, [painScore]);
+
+  // Pain label from constraints
+  const painLabel = useMemo(() => {
+    if (constraints && constraints.length > 0) {
+      const bodyRegion = constraints[0].body_region;
+      if (bodyRegion) return `${bodyRegion.toUpperCase()} PAIN (DURING SET)`;
+    }
+    return 'BODY PAIN (DURING SET)';
+  }, [constraints]);
+
+  // Highlighted muscles for anatomy
+  const highlightedMuscles = useMemo(() => {
+    if (!day) return [];
+    const ex = day.exercises[activeExerciseIndex];
+    if (!ex) return [];
+    const def = exercises[ex.exerciseId];
+    return (def?.primary_muscles ?? []).map((m) => m.muscle);
+  }, [day, activeExerciseIndex, exercises]);
 
   if (programsQuery.loading) return <LoadingScreen label={t('loading.session')} />;
   if (programsQuery.error) {
@@ -146,6 +219,7 @@ export default function LiveSession() {
     );
   }
 
+  // ── Mutations ──
   const updateSet = (exIdx: number, setIdx: number, field: keyof SetLog, value: string) => {
     setLogs((prev) => {
       const next = { ...prev };
@@ -185,10 +259,7 @@ export default function LiveSession() {
 
     setRestTimers((prev) => ({
       ...prev,
-      [exIdx]: {
-        remainingSeconds: restSeconds,
-        nextSetIndex,
-      },
+      [exIdx]: { remainingSeconds: restSeconds, nextSetIndex },
     }));
 
     const interval = setInterval(() => {
@@ -206,10 +277,7 @@ export default function LiveSession() {
           delete next[exIdx];
           return next;
         }
-        return {
-          ...prev,
-          [exIdx]: { ...current, remainingSeconds: nextRemaining },
-        };
+        return { ...prev, [exIdx]: { ...current, remainingSeconds: nextRemaining } };
       });
     }, 1000);
 
@@ -280,19 +348,31 @@ export default function LiveSession() {
     try {
       const startedAt = startedAtRef.current;
       const startMs = new Date(startedAt).getTime();
-      await finishWorkout({
-        clientId: profile.id,
-        programId: program.id,
-        dayIndex,
-        startedAt,
-        exercises: exercisesLogged,
-        durationSeconds: Math.max(0, Math.round((Date.now() - startMs) / 1000)),
-        wearableSource: null,
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      Alert.alert(t('alerts.live.saved'), t('alerts.live.savedBody'), [
-        { text: t('common.done'), onPress: () => router.replace('/(client)/home') },
-      ]);
+      const durationSeconds = Math.max(0, Math.round((Date.now() - startMs) / 1000));
+
+      if (program.id.startsWith('draft_')) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        clearActiveSession();
+        Alert.alert('Draft Test Complete', 'Great job! Since this was a draft test-drive, adherence was not logged.', [
+          { text: t('common.done'), onPress: () => router.replace('/(client)/home') },
+        ]);
+      } else {
+        const { finishWorkout } = await import('@/hooks/useAdherence');
+        await finishWorkout({
+          clientId: profile.id,
+          programId: program.id,
+          dayIndex,
+          startedAt,
+          exercises: exercisesLogged,
+          durationSeconds,
+          wearableSource: null,
+        });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        clearActiveSession();
+        Alert.alert(t('alerts.live.saved'), t('alerts.live.savedBody'), [
+          { text: t('common.done'), onPress: () => router.replace('/(client)/home') },
+        ]);
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : t('alerts.live.saveErrorFallback');
       Alert.alert(t('alerts.live.saveFail'), message);
@@ -301,94 +381,161 @@ export default function LiveSession() {
     }
   };
 
+  // ── Active exercise data ──
+  const activeEx = day.exercises[activeExerciseIndex];
+  const activeDef = activeEx ? exercises[activeEx.exerciseId] : null;
+  const activeSets = logs[activeExerciseIndex] ?? [];
+  const activeRest = restTimers[activeExerciseIndex];
+  const isDraft = program.status === 'draft' || program.id.startsWith('draft_');
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <ScreenContainer>
+        {/* ── Header ── */}
         <LiveSessionHeader
           programName={program.name}
           focusLabel={program.focus}
           dayLabel={day.label}
-          readinessLabel={`Readiness ${painScore > 6 ? 'Low' : 'Ready'}`}
-          heartRateLabel="HR 122 bpm"
+          isDraft={isDraft}
+          readinessPercent={readinessPercent}
+          heartRate={null}
           elapsedLabel={`${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, '0')}`}
+          isPaused={paused}
+          paceEnabled={false}
           onBack={() => router.back()}
+          onTogglePause={() => setPaused(!paused)}
           onTogglePace={() => Alert.alert('Pace toggle', 'Metronome/pace control is coming soon.')}
         />
 
-        {day.exercises.map((ex, exIdx) => {
-          const def = exercises[ex.exerciseId];
-          const sets = logs[exIdx] ?? [];
-          const nameForA11y = def?.name ?? exFallback;
-          const rest = restTimers[exIdx];
-          return (
-            <View key={`${ex.exerciseId}-${exIdx}`}>
-              <LiveExerciseCard
-                indexLabel={`${ex.supersetGroup ?? 'A'}${exIdx + 1}`}
-                name={def?.name ?? exFallback}
-                meta={`${ex.sets} × ${ex.reps}${ex.tempo ? ` · Tempo ${ex.tempo}` : ''}`}
-                notes={ex.notes}
-                sets={sets}
-                restLabel={rest ? t('liveSession.rest', { seconds: rest.remainingSeconds }) : null}
-                onChangeSet={(setIdx, field, value) => {
-                  setActiveExerciseIndex(exIdx);
-                  updateSet(exIdx, setIdx, field, value);
-                }}
-                onToggleSetDone={(setIdx) => {
-                  setActiveExerciseIndex(exIdx);
-                  toggleDone(exIdx, setIdx);
-                }}
-                onAddSet={() => addSet(exIdx)}
-                onCopyPreviousSet={() => {
-                  const exSets = logs[exIdx] ?? [];
-                  const previous = exSets[exSets.length - 2];
-                  if (!previous) return;
-                  updateSet(exIdx, exSets.length - 1, 'reps', previous.reps);
-                  updateSet(exIdx, exSets.length - 1, 'weight', previous.weight);
-                  updateSet(exIdx, exSets.length - 1, 'rir', previous.rir);
-                }}
-                onNextExercise={() => setActiveExerciseIndex((current) => Math.min(day.exercises.length - 1, current + 1))}
-              />
-              <Pressable
-                style={styles.videoBtn}
-                onPress={() => openVideo(def?.video_url)}
-                accessibilityLabel={t('liveSession.openVideoA11y')}
-              >
-                <Text style={styles.videoBtnText}>Open video</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setSelectedExercise(def ?? null)}
-                disabled={!def}
-                accessibilityLabel={t('screens.programDetailClient.openExerciseA11y', { name: nameForA11y })}
-              >
-                <Text style={[styles.exName, def && styles.exNameTap]}>{t('common.details')}</Text>
-              </Pressable>
-            </View>
-          );
-        })}
+        {/* ── Exercise navigation stepper ── */}
+        <View style={styles.stepper}>
+          <Text style={styles.stepperLabel}>
+            Exercise {activeExerciseIndex + 1} of {day.exercises.length}
+          </Text>
+          <View style={styles.stepperDots}>
+            {day.exercises.map((_, i) => {
+              const allDone = (logs[i] ?? []).every((s) => s.done) && (logs[i] ?? []).length > 0;
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => setActiveExerciseIndex(i)}
+                  style={[
+                    styles.stepperDot,
+                    i === activeExerciseIndex && styles.stepperDotActive,
+                    allDone && styles.stepperDotDone,
+                  ]}
+                />
+              );
+            })}
+          </View>
+        </View>
 
+        {/* ── Clinical Constraint Banner ── */}
+        {constraints && constraints.length > 0 && (
+          <LiveConstraintBanner
+            constraints={constraints}
+            onSwapExercise={() => Alert.alert('Swap Exercise', 'Exercise swap from clinical constraints is coming soon.')}
+          />
+        )}
+
+        {/* ── Single Active Exercise Card ── */}
+        {activeEx && (
+          <LiveExerciseCard
+            indexLabel={`${activeEx.supersetGroup ?? 'A'}${activeExerciseIndex + 1}`}
+            name={activeDef?.name ?? exFallback}
+            prescription={`${activeEx.sets} × ${activeEx.reps} reps`}
+            tempo={activeEx.tempo}
+            restSeconds={activeEx.restSeconds}
+            notes={activeEx.notes}
+            muscleTags={(activeDef?.primary_muscles ?? []).map((m) => m.muscle)}
+            sets={activeSets}
+            totalSets={activeEx.sets ?? 3}
+            prescribedReps={activeEx.reps}
+            restLabel={activeRest ? t('liveSession.rest', { seconds: activeRest.remainingSeconds }) : null}
+            onChangeSet={(setIdx, field, value) => {
+              updateSet(activeExerciseIndex, setIdx, field, value);
+            }}
+            onToggleSetDone={(setIdx) => {
+              toggleDone(activeExerciseIndex, setIdx);
+            }}
+            onAddSet={() => addSet(activeExerciseIndex)}
+            onCopyPreviousSet={() => {
+              const exSets = logs[activeExerciseIndex] ?? [];
+              const previous = exSets[exSets.length - 2];
+              if (!previous) return;
+              updateSet(activeExerciseIndex, exSets.length - 1, 'reps', previous.reps);
+              updateSet(activeExerciseIndex, exSets.length - 1, 'weight', previous.weight);
+              updateSet(activeExerciseIndex, exSets.length - 1, 'rir', previous.rir);
+            }}
+            onCopySetValues={(setIdx) => {
+              if (setIdx === 0) return;
+              const prev = activeSets[setIdx - 1];
+              if (!prev) return;
+              updateSet(activeExerciseIndex, setIdx, 'reps', prev.reps);
+              updateSet(activeExerciseIndex, setIdx, 'weight', prev.weight);
+              updateSet(activeExerciseIndex, setIdx, 'rir', prev.rir);
+            }}
+            onNextExercise={() => {
+              setActiveExerciseIndex((current) => Math.min(day.exercises.length - 1, current + 1));
+            }}
+            onStartRest={() => {
+              const restSec = activeEx.restSeconds ?? 90;
+              const currentSetIdx = activeSets.findIndex((s) => !s.done);
+              startRestTimer(activeExerciseIndex, currentSetIdx >= 0 ? currentSetIdx : activeSets.length, restSec);
+            }}
+          />
+        )}
+
+        {/* ── Session Load Distribution ── */}
         <LiveMuscleLoadPanel
-          rows={Object.entries(
-            day.exercises.reduce<Record<string, number>>((acc, ex, idx) => {
-              const def = exercises[ex.exerciseId];
-              const setsDone = (logs[idx] ?? []).filter((s) => s.done).length;
-              (def?.primary_muscles ?? []).forEach((m) => {
-                acc[m.muscle] = (acc[m.muscle] ?? 0) + Math.round((m.contribution ?? 0) * Math.max(1, setsDone));
-              });
-              return acc;
-            }, {}),
-          )
-            .slice(0, 5)
-            .map(([muscle, load]) => ({ muscle, load }))}
+          rows={muscleLoadRows}
+          totalVolumeKg={totalVolumeKg}
         />
+
+        {/* ── Subjective Feedback ── */}
         <SubjectiveFeedbackCard
           painScore={painScore}
           notes={subjectiveNotes}
-          onChangePain={setPainScore}
+          painLabel={painLabel}
+          highlightedMuscles={highlightedMuscles}
+          onChangePain={(score) => {
+            setPainScore(score);
+            // Reset the per-exercise sent guard if user adjusts score after switching exercise
+            if (score < 4) setPainMarkerSent(false);
+          }}
           onChangeNotes={setSubjectiveNotes}
+          onReportPain={profile ? async () => {
+            if (!profile || painMarkerSent) return;
+            setPainMarkerSent(true);
+            const activeConstraint = constraints?.[0] ?? null;
+            await emitPainMarker({
+              clientId: profile.id,
+              painScore,
+              bodyRegion: activeConstraint?.body_region ?? null,
+              context: 'live_session',
+              exerciseId: activeEx?.exerciseId ?? null,
+              programId: program.id,
+              notes: subjectiveNotes || null,
+              constraintId: activeConstraint?.id ?? null,
+              actorId: profile.id,
+            });
+          } : undefined}
+          painReported={painMarkerSent}
         />
 
-        <VerveButton label={t('liveSession.finishWorkout')} onPress={onFinish} loading={busy} />
+        {/* ── Finish Session Button (danger styled) ── */}
+        <Pressable
+          onPress={onFinish}
+          disabled={busy}
+          style={[styles.finishBtn, busy && styles.finishBtnDisabled]}
+        >
+          <Ionicons name="stop-circle" size={18} color={colors.danger} />
+          <Text style={styles.finishBtnText}>
+            {busy ? t('common.saving') || 'Saving...' : 'Finish Session'}
+          </Text>
+        </Pressable>
+
         <ExerciseDetailSheet
           visible={Boolean(selectedExercise)}
           exercise={selectedExercise}
@@ -399,132 +546,57 @@ export default function LiveSession() {
   );
 }
 
-function NumericCell({
-  value,
-  onChange,
-  editable,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  editable: boolean;
-}) {
-  const { t } = useTranslation();
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChange}
-      keyboardType="numeric"
-      editable={editable}
-      placeholder={t('liveSession.numericPlaceholder')}
-      placeholderTextColor={colors.textFaint}
-      style={[cellStyles.input, !editable && cellStyles.inputDisabled]}
-    />
-  );
-}
-
-const cellStyles = StyleSheet.create({
-  input: {
-    flex: 1,
-    backgroundColor: colors.surface2,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: colors.borderDefault,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    color: colors.textStrong,
-    fontFamily: typography.family.bodyMedium,
-    fontSize: typography.size.base,
-    textAlign: 'center',
-    marginHorizontal: 4,
-  },
-  inputDisabled: {
-    opacity: 0.5,
-  },
-});
-
 const styles = StyleSheet.create({
-  back: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  backText: { color: colors.primary, fontFamily: typography.family.bodyMedium, fontSize: typography.size.sm },
-  title: {
-    color: colors.textStrong,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xxl,
-    marginTop: 8,
-  },
-  sub: { color: colors.textMuted, fontSize: typography.size.sm, marginTop: 2 },
-  exName: { color: colors.textStrong, fontFamily: typography.family.bodyBold, fontSize: typography.size.base },
-  exMeta: { color: colors.textMuted, fontSize: typography.size.sm },
-  exNameTap: { textDecorationLine: 'underline', textDecorationColor: colors.primary },
-  exHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  videoBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: colors.borderAccent,
-    backgroundColor: colors.primaryDim,
+  /* ── Stepper ── */
+  stepper: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
-  videoBtnText: {
-    color: colors.primary,
-    fontFamily: typography.family.bodyBold,
-    fontSize: typography.size.sm,
-    marginLeft: 1,
-  },
-  tableHead: { flexDirection: 'row', alignItems: 'center', paddingTop: 4, paddingBottom: 6 },
-  tableCell: {
-    flex: 1,
+  stepperLabel: {
     color: colors.textMuted,
-    fontFamily: typography.family.bodyBold,
+    fontFamily: typography.family.bodyMedium,
     fontSize: typography.size.xs,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    textAlign: 'center',
   },
-  doneHeader: {
-    width: 32,
-    color: colors.textMuted,
-    fontFamily: typography.family.bodyBold,
-    fontSize: typography.size.xs,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginHorizontal: 4,
+  stepperDots: {
+    flexDirection: 'row',
+    gap: 5,
   },
-  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, position: 'relative' },
-  tableRowDone: { opacity: 0.55 },
-  doneToggle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  stepperDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.borderSubtle,
     borderWidth: 1,
     borderColor: colors.borderDefault,
-    backgroundColor: colors.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 4,
   },
-  doneToggleActive: {
+  stepperDotActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  restTimerPill: {
-    position: 'absolute',
-    top: -12,
-    left: 0,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.primaryBorder,
+  stepperDotDone: {
     backgroundColor: colors.primaryDim,
+    borderColor: colors.primaryBorder,
   },
-  restTimerText: {
-    color: colors.primary,
+
+  /* ── Finish button ── */
+  finishBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    backgroundColor: 'rgba(239, 68, 68, 0.06)',
+    marginTop: 8,
+  },
+  finishBtnDisabled: { opacity: 0.5 },
+  finishBtnText: {
+    color: colors.danger,
     fontFamily: typography.family.bodyBold,
-    fontSize: typography.size.xs,
+    fontSize: typography.size.base,
   },
-  addSet: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 4 },
-  addSetText: { color: colors.primary, fontFamily: typography.family.bodyMedium, fontSize: typography.size.sm },
 });

@@ -30,7 +30,7 @@ export function computeVolumeMap(
         });
         return;
       }
-      const key = toMuscleKey(ex.muscle) ?? ex.muscle.toLowerCase();
+      const key = toMuscleKey(ex.muscle) ?? ex.muscle?.toLowerCase();
       if (key) map[key] = (map[key] || 0) + sets;
     });
   });

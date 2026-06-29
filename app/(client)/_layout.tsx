@@ -1,13 +1,17 @@
-import { Tabs } from 'expo-router';
+import { View } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { RadialQuickMenu } from '@/components/client/RadialQuickMenu';
 import { UserTrialBottomNav } from '@/components/client/UserTrialBottomNav';
 import { useTranslation } from '@/lib/i18n';
 import { colors, typography } from '@/lib/theme';
 
 export default function ClientTabsLayout() {
   const { t } = useTranslation();
+  const router = useRouter();
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -138,6 +142,22 @@ export default function ClientTabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="library"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
+    <RadialQuickMenu 
+      options={[
+        { id: 'quick-add', icon: 'add-circle-outline', label: 'Quick Add' },
+        { id: 'library', icon: 'library-outline', label: 'Library', onPress: () => router.push('/(client)/library') },
+        { id: 'timer', icon: 'timer-outline', label: 'Rest Timer' },
+        { id: 'analytics', icon: 'stats-chart-outline', label: 'Insights' },
+        { id: 'readiness', icon: 'pulse-outline', label: 'Readiness' },
+      ]}
+    />
+    </View>
   );
 }

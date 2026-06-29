@@ -21,10 +21,12 @@ import { Input } from '@/components/Input';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { VerveButton } from '@/components/VerveButton';
+import { ClientPainPanel } from '@/features/constraints/ClientPainPanel';
 import { createBooking as createBookingMutation } from '@/hooks/useBookingMutations';
 import { getOrCreateDirectConversation } from '@/hooks/useConversations';
 import { useClientDetail } from '@/hooks/useClientDetail';
 import { useConstraints } from '@/hooks/useConstraints';
+import { usePainMarkers } from '@/hooks/usePainMarkers';
 import { useTranslation } from '@/lib/i18n';
 import { colors, typography } from '@/lib/theme';
 import type { ConstraintSeverity } from '@/types/database';
@@ -36,6 +38,7 @@ export default function TrainerClientDetail() {
   const { profile } = useAuth();
   const detail = useClientDetail(id ?? null);
   const constraints = useConstraints(id ?? null);
+  const painMarkers = usePainMarkers(id ?? null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingBusy, setBookingBusy] = useState(false);
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -119,10 +122,11 @@ export default function TrainerClientDetail() {
       <ScreenContainer
         refreshControl={
           <RefreshControl
-            refreshing={detail.loading || constraints.loading}
+            refreshing={detail.loading || constraints.loading || painMarkers.loading}
             onRefresh={() => {
               void detail.refresh();
               void constraints.refresh();
+              void painMarkers.refresh();
             }}
             tintColor={colors.primary}
           />
@@ -190,6 +194,9 @@ export default function TrainerClientDetail() {
             ))
           )}
         </GlassCard>
+
+        {/* ── Pain Signals Panel ── */}
+        <ClientPainPanel markers={painMarkers.markers} loading={painMarkers.loading} />
 
         <GlassCard style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>{t('trainerClientDetail.constraints')}</Text>

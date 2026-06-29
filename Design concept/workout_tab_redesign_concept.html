@@ -1,0 +1,3402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verve Workout Tab - Interactive Redesign Concept</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  
+  <style>
+    /* DESIGN TOKENS & VARIABLES */
+    :root {
+      --bg-canvas: #121318;
+      --bg-sidebar: #181920;
+      --border-dark: #272832;
+      --text-dim: #94a3b8;
+      
+      /* App Skin */
+      --app-bg: #050b14;
+      --app-surface-1: rgba(15, 23, 42, 0.65);
+      --app-surface-2: rgba(30, 41, 59, 0.45);
+      --app-border: rgba(255, 255, 255, 0.08);
+      --app-border-strong: rgba(255, 255, 255, 0.16);
+      
+      /* Colors */
+      --primary: #10B981;
+      --primary-hover: #059669;
+      --primary-dim: rgba(16, 185, 129, 0.12);
+      --primary-border: rgba(16, 185, 129, 0.28);
+      --clinical: #06b6d4;
+      --clinical-dim: rgba(6, 182, 212, 0.10);
+      --clinical-border: rgba(6, 182, 212, 0.30);
+      --warning: #f59e0b;
+      --warning-dim: rgba(245, 158, 11, 0.15);
+      --warning-border: rgba(245, 158, 11, 0.35);
+      --danger: #ef4444;
+      --danger-dim: rgba(239, 68, 68, 0.12);
+      --danger-border: rgba(239, 68, 68, 0.30);
+      
+      --text-strong: #ffffff;
+      --text-main: #f8fafc;
+      --text-sub: #cbd5e1;
+      --text-muted: #64748b;
+      --text-faint: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP HEADER */
+    .concept-header {
+      background-color: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-dark);
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 13px;
+      user-select: none;
+      z-index: 10;
+    }
+
+    .concept-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .logo-mark {
+      background-color: var(--primary-dim);
+      border: 1px solid var(--primary-border);
+      color: var(--primary);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .concept-breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-dim);
+    }
+
+    .concept-breadcrumbs span.active {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .concept-btn-reset {
+      background-color: transparent;
+      border: 1px solid var(--border-dark);
+      color: var(--text-sub);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .concept-btn-reset:hover {
+      background-color: rgba(255,255,255,0.03);
+      color: #fff;
+    }
+
+    /* WORKSPACE */
+    .concept-workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR */
+    .concept-sidebar {
+      width: 320px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-dark);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    .sidebar-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      padding: 18px 20px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .sidebar-desc {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      padding: 12px 20px;
+      line-height: 1.6;
+    }
+
+    .feature-list {
+      padding: 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .feature-item:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .feature-item i {
+      font-size: 14px;
+      color: var(--primary);
+      margin-top: 1px;
+    }
+
+    .feature-item-title {
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+      font-size: 11.5px;
+    }
+
+    /* INTERACTION LOG */
+    .log-panel {
+      border-top: 1px solid var(--border-dark);
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .log-header {
+      padding: 8px 16px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      background-color: rgba(0,0,0,0.15);
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .log-box {
+      flex: 1;
+      padding: 10px 16px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      color: var(--text-sub);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .log-entry {
+      line-height: 1.4;
+    }
+
+    .log-time {
+      color: var(--text-muted);
+      margin-right: 6px;
+    }
+
+    .log-action {
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .log-error {
+      color: var(--danger);
+      font-weight: bold;
+    }
+
+    .log-info {
+      color: var(--clinical);
+    }
+
+    /* CANVAS VIEWPORT */
+    .concept-canvas {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 0),
+        radial-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 0);
+      background-size: 24px 24px;
+      background-position: 0 0, 12px 12px;
+      position: relative;
+    }
+
+    /* PHONE SHELL */
+    .phone-shell {
+      width: 380px;
+      height: 800px;
+      border-radius: 40px;
+      background-color: #000;
+      box-shadow: 
+        0 0 0 10px #222,
+        0 0 0 11px #333,
+        0 15px 40px rgba(0,0,0,0.7);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 3px solid #111;
+    }
+
+    /* DYNAMIC ISLAND */
+    .island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 26px;
+      background-color: #000;
+      border-radius: 16px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    /* PHONE SCREEN */
+    .screen {
+      flex: 1;
+      background-color: var(--app-bg);
+      color: var(--text-main);
+      overflow-y: auto;
+      padding: 42px 14px 70px;
+      position: relative;
+      scrollbar-width: none;
+    }
+
+    .screen::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* BOTTOM NAV BAR */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background-color: rgba(5, 11, 20, 0.92);
+      border-top: 1px solid var(--app-border);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding-bottom: 8px;
+      z-index: 900;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 9px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .nav-item i {
+      font-size: 18px;
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+    }
+
+    /* SEGMENTED TAB CONTROL */
+    .segmented-control {
+      display: flex;
+      background-color: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    .segment-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 7px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .segment-btn.active {
+      background-color: var(--primary-dim);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+    }
+
+    /* CARD SYSTEM */
+    .glass-card {
+      background-color: var(--app-surface-1);
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(12px);
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .glass-card:hover {
+      border-color: var(--app-border-strong);
+    }
+
+    .card-kicker-danger {
+      color: var(--danger);
+      font-weight: 800;
+      font-size: 9.5px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .card-subtitle {
+      color: var(--text-dim);
+      font-size: 11.5px;
+      margin-top: 1px;
+    }
+
+    /* TAB CONTENT WRAP */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* TAB 1: CURRENT PLAN */
+    /* Clinical Safety Card */
+    .clinical-safety-card {
+      border-left: 3px solid var(--danger);
+      background-color: rgba(239, 68, 68, 0.04);
+    }
+
+    .safety-chevron {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      font-size: 14px;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+
+    .safety-details {
+      margin-top: 10px;
+      border-top: 1px solid var(--app-border);
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .safety-details.collapsed {
+      display: none;
+    }
+
+    .constraint-item {
+      background-color: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .constraint-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .constraint-name {
+      font-weight: 700;
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .constraint-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge-hard {
+      background-color: var(--danger-dim);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
+    }
+
+    .badge-soft {
+      background-color: var(--warning-dim);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+    }
+
+    .constraint-notes {
+      font-size: 10.5px;
+      color: var(--text-sub);
+      line-height: 1.4;
+    }
+
+    .constraint-limit {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--warning);
+      margin-top: 2px;
+    }
+
+    .constraint-footer {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Workout Day Carousel */
+    .carousel-container {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 2px 0;
+      scroll-snap-type: x mandatory;
+      margin-bottom: 12px;
+    }
+
+    .carousel-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .day-card {
+      min-width: 320px;
+      max-width: 320px;
+      scroll-snap-align: start;
+      margin-bottom: 0;
+    }
+
+    .day-card.active {
+      border-color: var(--primary-border);
+      background-color: rgba(16, 185, 129, 0.03);
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .day-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      background-color: var(--primary-dim);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .muscles-progress {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .muscle-progress-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .muscle-progress-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+
+    .progress-track {
+      height: 3px;
+      background-color: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary);
+      border-radius: 2px;
+    }
+
+    .day-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .app-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 11px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .app-btn-outline {
+      background-color: rgba(255,255,255,0.02);
+      border: 1px solid var(--app-border);
+      color: var(--text-main);
+    }
+
+    .app-btn-outline:hover {
+      background-color: rgba(255,255,255,0.05);
+    }
+
+    .app-btn-primary {
+      background-color: var(--primary);
+      color: var(--app-bg);
+    }
+
+    .app-btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .carousel-preview-panel {
+      margin-top: 10px;
+      border-top: 1px solid var(--app-border);
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .carousel-preview-panel.collapsed {
+      display: none;
+    }
+
+    .preview-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+
+    .preview-idx {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background-color: rgba(255,255,255,0.04);
+      border: 1px solid var(--app-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .preview-name {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .preview-meta {
+      font-size: 9.5px;
+      color: var(--text-dim);
+    }
+
+    /* Heatmap Completed sets */
+    .heatmap-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .heatmap-title-icon {
+      font-size: 16px;
+      color: var(--primary);
+    }
+
+    .heatmap-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .heatmap-cell {
+      width: calc(50% - 3px);
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .heatmap-cell:hover {
+      background-color: var(--app-surface-1);
+    }
+
+    .cell-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cell-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .cell-sets {
+      font-size: 9.5px;
+      color: var(--text-dim);
+    }
+
+    .cell-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .heatmap-legend {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--app-border);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    .legend-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    /* Stats Panel */
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .stat-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+    }
+
+    .stat-icon {
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .stat-val {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #fff;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 24px;
+      background-color: var(--app-border);
+    }
+
+    /* TAB 2: SAVED TEMPLATES */
+    .saved-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .saved-card {
+      padding: 12px;
+    }
+
+    .saved-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .saved-plan-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .saved-plan-meta {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+
+    .badge-staged {
+      font-size: 9px;
+      font-weight: 700;
+      background-color: var(--primary-dim);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    .saved-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--app-border);
+      padding-top: 8px;
+    }
+
+    .action-btn-link {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .action-btn-link:hover {
+      text-decoration: underline;
+    }
+
+    .action-btn-link-danger {
+      color: var(--danger);
+    }
+
+    .empty-state-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 24px 16px;
+      gap: 8px;
+    }
+
+    .empty-icon {
+      font-size: 30px;
+      color: var(--text-faint);
+    }
+
+    /* TAB 3: WORKOUT BUILDER */
+    .builder-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .builder-days-nav {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-bottom: 12px;
+      padding: 1px 0;
+    }
+
+    .builder-days-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .day-tab-btn {
+      background-color: rgba(255,255,255,0.02);
+      border: 1px solid var(--app-border);
+      color: var(--text-dim);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .day-tab-btn.active {
+      background-color: var(--primary-dim);
+      color: var(--primary);
+      border-color: var(--primary-border);
+    }
+
+    .builder-meta-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .builder-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .builder-input-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .builder-input {
+      background-color: rgba(255,255,255,0.02);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      color: #fff;
+      padding: 6px 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .builder-select {
+      background-color: #0b1224;
+      color: #fff;
+    }
+
+    .builder-canvas {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+      min-height: 80px;
+    }
+
+    .empty-day-msg {
+      border: 1.5px dashed var(--app-border-strong);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 11px;
+    }
+
+    /* Group Container styles */
+    .superset-group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      margin-top: 4px;
+    }
+
+    .superset-group-title {
+      font-size: 9.5px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .superset-group-divider {
+      flex: 1;
+      height: 1px;
+      background-color: rgba(16, 185, 129, 0.14);
+    }
+
+    .superset-group-rest {
+      font-size: 9px;
+      color: var(--text-dim);
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 4px;
+      padding: 1px 4px;
+    }
+
+    .superset-group-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-left: 2px solid var(--primary);
+      padding-left: 10px;
+      margin-left: 4px;
+    }
+
+    /* Editable Exercise Card inside Builder */
+    .builder-ex-card {
+      margin-bottom: 0; /* Let wrappers handle gap */
+    }
+
+    .builder-ex-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .builder-ex-title-sec {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .builder-ex-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .builder-ex-muscle-tag {
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .builder-ex-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .builder-ex-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .builder-ex-btn:hover {
+      color: #fff;
+    }
+
+    .builder-ex-grid {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Small Stepper controls */
+    .stepper-control {
+      flex: 1;
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 28px;
+      padding: 0 4px;
+    }
+
+    .stepper-label {
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      padding-left: 2px;
+    }
+
+    .stepper-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stepper-btn {
+      background-color: rgba(255,255,255,0.03);
+      border: 1px solid var(--app-border);
+      color: var(--text-sub);
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    /* Collapsible card editor */
+    .builder-ex-expand {
+      margin-top: 8px;
+      border-top: 1px solid var(--app-border);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .builder-ex-expand.collapsed {
+      display: none;
+    }
+
+    .ex-expand-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ex-expand-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .ex-expand-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .ex-expand-input {
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      color: #fff;
+      padding: 4px 8px;
+      font-size: 10.5px;
+    }
+
+    .ex-expand-switch-row {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      height: 28px;
+      padding: 0 8px;
+      margin-top: 14px;
+    }
+
+    .switch-btn {
+      width: 32px;
+      height: 18px;
+      border-radius: 10px;
+      background-color: rgba(255,255,255,0.1);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .switch-btn.active {
+      background-color: var(--primary);
+    }
+
+    .switch-dot {
+      width: 14px;
+      height: 14px;
+      background-color: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: left 0.15s;
+    }
+
+    .switch-btn.active .switch-dot {
+      left: 16px;
+    }
+
+    /* Off-screen canvas library */
+    .sheet-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(5, 11, 20, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s, opacity 0.2s;
+    }
+
+    .sheet-modal.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .sheet-content {
+      background-color: #0b1224;
+      border-top: 1px solid var(--app-border-strong);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      height: 70%;
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .sheet-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .sheet-close {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .sheet-search {
+      background-color: rgba(255,255,255,0.02);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      color: #fff;
+      padding: 6px 10px;
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+
+    .sheet-filter-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-bottom: 10px;
+      padding-bottom: 2px;
+    }
+
+    .sheet-filter-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sheet-chip {
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      padding: 4px 10px;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-dim);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .sheet-chip.active {
+      background-color: var(--primary);
+      color: var(--app-bg);
+      border-color: var(--primary);
+    }
+
+    .sheet-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sheet-list-section-title {
+      font-size: 9px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-top: 6px;
+      margin-bottom: 2px;
+    }
+
+    .library-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .library-item:hover {
+      background-color: var(--app-surface-1);
+    }
+
+    .lib-item-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .lib-item-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lib-item-name {
+      font-weight: 700;
+      font-size: 11.5px;
+      color: #fff;
+    }
+
+    .lib-item-meta {
+      font-size: 9.5px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+
+    .lib-item-minibars {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .lib-minibar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background-color: rgba(255,255,255,0.02);
+      border-radius: 4px;
+      padding: 1px 4px;
+    }
+
+    .lib-minibar-label {
+      font-size: 8px;
+      color: var(--text-dim);
+    }
+
+    .lib-minibar-track {
+      width: 16px;
+      height: 2px;
+      background-color: rgba(255,255,255,0.1);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .lib-minibar-fill {
+      height: 100%;
+      background-color: var(--primary);
+    }
+
+    /* REST DIALOG & DETAIL SHEETS */
+    .pb-redesign-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(2, 4, 8, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1200;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s, opacity 0.2s;
+    }
+
+    .pb-redesign-modal.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .pb-redesign-modal-content {
+      background-color: #0b1224;
+      border: 1px solid var(--app-border-strong);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      max-height: 70%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+    }
+
+    .pb-redesign-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--app-border);
+      padding-bottom: 8px;
+    }
+
+    .pb-redesign-modal-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .pb-redesign-modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .pb-redesign-modal-compare-grid {
+      display: flex;
+      gap: 10px;
+    }
+
+    .pb-redesign-modal-compare-box {
+      flex: 1;
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pb-redesign-modal-compare-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .pb-redesign-modal-compare-val {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .pb-redesign-modal-list-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .pb-redesign-modal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .pb-redesign-modal-list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+
+    .pb-redesign-modal-list-left {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .pb-redesign-modal-list-name {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .pb-redesign-modal-list-sub {
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    .pb-redesign-modal-list-val {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* READINESS SURVEY OVERLAY */
+    .readiness-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(2, 4, 8, 0.95);
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px 16px;
+      gap: 14px;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s, opacity 0.2s;
+    }
+
+    .readiness-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .readiness-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+    }
+
+    .readiness-desc {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .readiness-pain-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .pain-num {
+      flex: 1;
+      height: 30px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      background-color: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .pain-num.active-pain {
+      background-color: var(--primary);
+      color: var(--app-bg);
+      border-color: var(--primary);
+    }
+
+    .readiness-textarea {
+      background-color: rgba(255,255,255,0.02);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      color: #fff;
+      width: 100%;
+      padding: 8px;
+      font-size: 11px;
+      height: 60px;
+      resize: none;
+    }
+
+    /* RIGHT COLUMN COMPONENT SPECIFICATIONS PANEL */
+    .concept-inspector {
+      width: 320px;
+      background-color: var(--bg-sidebar);
+      border-left: 1px solid var(--border-dark);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    .inspector-content {
+      flex: 1;
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .inspector-card {
+      background-color: rgba(0,0,0,0.15);
+      border: 1px solid var(--border-dark);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .inspector-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .inspector-card-title i {
+      color: var(--primary);
+    }
+
+    .spec-table {
+      width: 100%;
+      font-size: 11px;
+      border-collapse: collapse;
+    }
+
+    .spec-table td {
+      padding: 5px 0;
+      vertical-align: top;
+    }
+
+    .spec-label {
+      color: var(--text-dim);
+      width: 100px;
+    }
+
+    .spec-value {
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .code-title {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    .code-box {
+      background-color: #0d0e14;
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: #a5d6ff;
+      overflow-x: auto;
+      max-height: 250px;
+      white-space: pre;
+    }
+
+    /* TOAST STYLING */
+    .app-toast {
+      position: absolute;
+      bottom: 80px;
+      left: 14px;
+      right: 14px;
+      background-color: #0f172a;
+      border: 1px solid var(--primary-border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 2000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s, opacity 0.2s;
+    }
+
+    .app-toast.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .app-toast i {
+      color: var(--primary);
+      font-size: 16px;
+    }
+
+    .app-toast-text {
+      font-size: 11px;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- HEADER BAR -->
+  <header class="concept-header">
+    <div class="concept-logo">
+      <div class="logo-mark"><i class="bi bi-journal-check"></i></div>
+      <span>Verve Workout Redesign Portal</span>
+    </div>
+    <div class="concept-breadcrumbs">
+      <span>Figma Canvas</span> &gt; <span>Workout Tab</span> &gt; <span class="active">Interactive Mockup Spec</span>
+    </div>
+    <button class="concept-btn-reset" onclick="resetPrototype()"><i class="bi bi-arrow-counterclockwise"></i>Reset Sandbox</button>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="concept-workspace">
+    <!-- LEFT SIDEBAR: SPEC EXPLANATIONS -->
+    <aside class="concept-sidebar">
+      <div class="sidebar-title">Architecture Specs</div>
+      <div class="sidebar-desc">
+        This sandbox provides a fully interactive mockup of the 3-tab client Workout portal redesign as proposed. Explore real-time state propagation and check details.
+      </div>
+      
+      <div class="feature-list">
+        <div class="feature-item" onclick="switchAppTab('current')">
+          <i class="bi bi-shield-check"></i>
+          <div>
+            <div class="feature-item-title">Current Tab & Safety</div>
+            <div style="font-size:10px; color:var(--text-dim)">Highlights active restrictions, snapping carousel days, rolling sets heatmaps, and stats.</div>
+          </div>
+        </div>
+
+        <div class="feature-item" onclick="switchAppTab('builder')">
+          <i class="bi bi-sliders"></i>
+          <div>
+            <div class="feature-item-title">Workout Builder Tab</div>
+            <div style="font-size:10px; color:var(--text-dim)">Draft custom program parameters, edit sets/reps/tempo, build supersets, and check constraints.</div>
+          </div>
+        </div>
+
+        <div class="feature-item" onclick="switchAppTab('saved')">
+          <i class="bi bi-folder-check"></i>
+          <div>
+            <div class="feature-item-title">Saved Templates Tab</div>
+            <div style="font-size:10px; color:var(--text-dim)">Stores standard protocols alongside program templates saved from the builder.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOG PANEL -->
+      <div class="log-panel">
+        <div class="log-header">Interactive Event Logs</div>
+        <div id="interactionLog" class="log-box">
+          <div class="log-entry"><span class="log-time">17:54:21</span><span class="log-info">Info:</span> Prototype loaded successfully.</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MIDDLE: FIGMA WEB FRAMEWORK CANVAS -->
+    <section class="concept-canvas">
+      <!-- PHONE SHELL -->
+      <div class="phone-shell">
+        <div class="island"></div>
+        
+        <!-- PHONE APP SCREEN -->
+        <div class="screen" id="appScreen">
+          <!-- HEADING ROW -->
+          <div class="app-header">
+            <h1>Workouts</h1>
+            <div style="font-size:16px; color:var(--primary); display:flex; gap:10px">
+              <i class="bi bi-bell"></i>
+            </div>
+          </div>
+
+          <!-- SEGMENTED TABS CONTROLS -->
+          <div class="segmented-control">
+            <button class="segment-btn active" id="btnTabCurrent" onclick="switchAppTab('current')">Current</button>
+            <button class="segment-btn" id="btnTabSaved" onclick="switchAppTab('saved')">Saved</button>
+            <button class="segment-btn" id="btnTabBuilder" onclick="switchAppTab('builder')">Builder</button>
+          </div>
+
+          <!-- ──────────────── TAB 1: CURRENT ──────────────── -->
+          <div id="tabContentCurrent" class="tab-content active">
+            <!-- CLINICAL SAFETY BANNER -->
+            <div id="safetyNotice" class="glass-card clinical-safety-card">
+              <div class="card-header-row" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleSafetyNotice()">
+                <div>
+                  <div class="card-kicker-danger"><i class="bi bi-shield-lock-fill"></i>Clinical Safety Center</div>
+                  <div class="card-title" id="safetyNoticeTitle">2 Active Restrictions</div>
+                  <div class="card-subtitle">Assigned by Dr. Sarah (Physio)</div>
+                </div>
+                <i class="bi bi-chevron-down" id="safetyChevron" style="color:var(--text-dim)"></i>
+              </div>
+              
+              <div class="safety-details" id="safetyDetails">
+                <div class="constraint-item">
+                  <div class="constraint-top">
+                    <span class="constraint-name">Overhead Pressing</span>
+                    <span class="constraint-badge badge-hard">Hard</span>
+                  </div>
+                  <div class="constraint-notes">Avoid shoulder overhead flexion movements completely due to active rotator cuff tendinitis.</div>
+                  <div class="constraint-footer">
+                    <i class="bi bi-person"></i> Dr. Sarah &middot; Active Block
+                  </div>
+                </div>
+                
+                <div class="constraint-item">
+                  <div class="constraint-top">
+                    <span class="constraint-name">Squats (Barbell)</span>
+                    <span class="constraint-badge badge-soft">Soft</span>
+                  </div>
+                  <div class="constraint-notes">Keep loads strictly below bodyweight limit to mitigate patellar joint compression forces.</div>
+                  <div class="constraint-limit">Limit: Max 60kg load</div>
+                  <div class="constraint-footer">
+                    <i class="bi bi-person"></i> Dr. Sarah &middot; Active Limit
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- WORKOUT DAY SNAPPING CAROUSEL -->
+            <div class="carousel-section">
+              <div class="carousel-container" id="currentDayCarousel">
+                <!-- JS generated day cards -->
+              </div>
+            </div>
+
+            <!-- LEDGER-AUGMENTED MUSCLE HEATMAP -->
+            <div class="glass-card" style="padding-bottom:10px">
+              <div class="heatmap-header">
+                <div class="card-title">Completed vs Planned sets</div>
+                <i class="bi bi-activity heatmap-title-icon"></i>
+              </div>
+              
+              <div class="heatmap-grid" id="currentHeatmapGrid">
+                <!-- JS generated cells -->
+              </div>
+              
+              <div class="heatmap-legend">
+                <div class="legend-item">
+                  <div class="legend-dot" style="background-color: rgba(16, 185, 129, 0.25);"></div>
+                  <span>Planned Only</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background-color: var(--primary);"></div>
+                  <span>Target Met</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background-color: var(--warning);"></div>
+                  <span>Over-Target</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PERFORMANCE ANALYTICS -->
+            <div class="glass-card">
+              <div class="card-title" style="margin-bottom: 8px;">Performance Analytics</div>
+              <div class="stats-row">
+                <div class="stat-box">
+                  <i class="bi bi-calendar-check text-primary stat-icon"></i>
+                  <span class="stat-val" id="statWorkoutsVal">3 of 4</span>
+                  <span class="stat-label">Weekly Workouts</span>
+                </div>
+                
+                <div class="stat-divider"></div>
+                
+                <div class="stat-box">
+                  <i class="bi bi-ui-checks text-info stat-icon"></i>
+                  <span class="stat-val" id="statAdherenceVal">28 / 32</span>
+                  <span class="stat-label">Sets Adherence</span>
+                </div>
+                
+                <div class="stat-divider"></div>
+                
+                <div class="stat-box">
+                  <i class="bi bi-speedometer text-warning stat-icon"></i>
+                  <span class="stat-val" id="statVolumeVal">14,500 kg</span>
+                  <span class="stat-label">Volume Moved</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ──────────────── TAB 2: SAVED ──────────────── -->
+          <div id="tabContentSaved" class="tab-content">
+            <div class="saved-list" id="savedTemplatesList">
+              <!-- JS generated saved plans -->
+            </div>
+          </div>
+
+          <!-- ──────────────── TAB 3: BUILDER ──────────────── -->
+          <div id="tabContentBuilder" class="tab-content">
+            <div class="builder-header">
+              <span style="font-size: 13px; font-weight: 700; color: #fff;"><i class="bi bi-sliders me-1 text-primary"></i>Program Builder</span>
+              <button class="app-btn app-btn-outline" style="padding: 3px 8px; flex: none;" onclick="saveProgramDraft()">Save Plan</button>
+            </div>
+            
+            <div class="builder-meta-section">
+              <div class="builder-input-group">
+                <label class="builder-input-label">Program Title</label>
+                <input type="text" class="builder-input" id="builderProgramName" value="Hypertrophy Base A" oninput="updateProgramName(this.value)">
+              </div>
+              <div class="builder-input-group">
+                <label class="builder-input-label">Frequency / Days</label>
+                <select class="builder-input builder-select" id="builderDaysCount" onchange="changeDaysCount(this.value)">
+                  <option value="2">2 Days / Week</option>
+                  <option value="3" selected>3 Days / Week</option>
+                  <option value="4">4 Days / Week</option>
+                  <option value="5">5 Days / Week</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Days Tabs -->
+            <div class="builder-days-nav" id="builderDaysNav">
+              <!-- JS generated Day tabs -->
+            </div>
+
+            <!-- Builder Workout Canvas -->
+            <div class="builder-canvas" id="builderWorkoutCanvas">
+              <!-- JS generated exercise cards & supersets -->
+            </div>
+
+            <!-- Add Exercise CTA -->
+            <button class="app-btn app-btn-primary" style="margin-top:10px" onclick="openExerciseLibrary()"><i class="bi bi-plus-circle-fill"></i>Add Exercise</button>
+
+            <!-- Planned stats and heatmaps -->
+            <div class="glass-card" style="margin-top: 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                <span class="builder-input-label">Target Volume Map</span>
+                <span style="font-size:9.5px; color:var(--primary); font-weight:bold" id="builderVolumeSummary">Total Sets: 0</span>
+              </div>
+              <div class="heatmap-grid" id="builderHeatmapGrid">
+                <!-- JS generated heatmap targets -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TOAST SUCCESS -->
+        <div class="app-toast" id="toastNotice">
+          <i class="bi bi-check-circle-fill"></i>
+          <span class="app-toast-text" id="toastNoticeText">Plan saved successfully!</span>
+        </div>
+
+        <!-- STATIC BOTTOM NAVIGATION BAR -->
+        <nav class="bottom-nav">
+          <div class="nav-item"><i class="bi bi-compass"></i>Overview</div>
+          <div class="nav-item active"><i class="bi bi-journal-check"></i>Workouts</div>
+          <div class="nav-item"><i class="bi bi-heart-pulse"></i>Progress</div>
+          <div class="nav-item"><i class="bi bi-chat-text"></i>Messages</div>
+        </nav>
+
+        <!-- EXERCISE LIBRARY MODAL -->
+        <div class="sheet-modal" id="exerciseLibraryModal">
+          <div class="sheet-content">
+            <div class="sheet-header">
+              <div class="sheet-title">Exercise Library</div>
+              <button class="sheet-close" onclick="closeExerciseLibrary()"><i class="bi bi-x"></i></button>
+            </div>
+            
+            <input type="text" class="sheet-search" id="libSearch" placeholder="Search exercises (e.g. Squat, Press)" oninput="filterLibrary()">
+            
+            <div class="sheet-filter-row">
+              <div class="sheet-chip active" id="chipEquip-all" onclick="filterEquip('all')">All Equipment</div>
+              <div class="sheet-chip" id="chipEquip-dumbbell" onclick="filterEquip('dumbbell')">Dumbbell</div>
+              <div class="sheet-chip" id="chipEquip-barbell" onclick="filterEquip('barbell')">Barbell</div>
+              <div class="sheet-chip" id="chipEquip-bodyweight" onclick="filterEquip('bodyweight')">Bodyweight</div>
+              <div class="sheet-chip" id="chipEquip-cable" onclick="filterEquip('cable')">Cable</div>
+            </div>
+
+            <div class="sheet-list" id="libraryItemsList">
+              <!-- JS generated catalog items -->
+            </div>
+          </div>
+        </div>
+
+        <!-- LEDGER DETAIL MODAL -->
+        <div class="pb-redesign-modal" id="heatmapDetailModal">
+          <div class="pb-redesign-modal-content">
+            <div class="pb-redesign-modal-header">
+              <div class="pb-redesign-modal-title" id="modalMuscleTitle">Chest Target sets</div>
+              <button class="pb-redesign-modal-close-btn" onclick="closeHeatmapDetailModal()"><i class="bi bi-x"></i></button>
+            </div>
+            
+            <div class="pb-redesign-modal-compare-grid">
+              <div class="pb-redesign-modal-compare-box">
+                <span class="pb-redesign-modal-compare-label">Completed sets</span>
+                <span class="pb-redesign-modal-compare-val" id="modalCompletedVal" style="color:var(--primary)">12</span>
+              </div>
+              <div class="pb-redesign-modal-compare-box">
+                <span class="pb-redesign-modal-compare-label">Target sets</span>
+                <span class="pb-redesign-modal-compare-val" id="modalTargetVal">10</span>
+              </div>
+            </div>
+            
+            <div>
+              <div class="pb-redesign-modal-list-title">Planned Exercises</div>
+              <div class="pb-redesign-modal-list" id="modalPlannedList">
+                <!-- JS generated -->
+              </div>
+            </div>
+
+            <div>
+              <div class="pb-redesign-modal-list-title">Completed Sets Log (7 Days)</div>
+              <div class="pb-redesign-modal-list" id="modalCompletedList">
+                <!-- JS generated -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBJECTIVE READINESS MODAL -->
+        <div class="readiness-overlay" id="readinessModal">
+          <div class="readiness-title">Subjective Readiness Quiz</div>
+          <div class="readiness-desc">Assess your current physical thresholds before starting the session. This keeps the session aligned with safety constraints.</div>
+          
+          <div>
+            <div class="pb-redesign-modal-list-title">Knee Pain Level (0 to 10)</div>
+            <div class="readiness-pain-grid">
+              <div class="pain-num" onclick="selectPainScore(0)">0</div>
+              <div class="pain-num" onclick="selectPainScore(2)">2</div>
+              <div class="pain-num" onclick="selectPainScore(4)">4</div>
+              <div class="pain-num" onclick="selectPainScore(6)">6</div>
+              <div class="pain-num active-pain" onclick="selectPainScore(8)" id="defaultPainNum">8</div>
+              <div class="pain-num" onclick="selectPainScore(10)">10</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="pb-redesign-modal-list-title">Any stiffness or symptoms?</div>
+            <textarea class="readiness-textarea" id="readinessNotes" placeholder="Describe symptoms or joint restrictions..."></textarea>
+          </div>
+
+          <div style="display:flex; gap:8px">
+            <button class="app-btn app-btn-outline" onclick="closeReadinessModal()">Cancel</button>
+            <button class="app-btn app-btn-primary" onclick="startActiveSession()">Start Session</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RIGHT SIDEBAR: INSPECTOR -->
+    <aside class="concept-inspector">
+      <div class="sidebar-title">Figma Inspector Spec</div>
+      <div class="inspector-content">
+        <div class="inspector-card">
+          <div class="inspector-card-title"><i class="bi bi-info-circle"></i>Selected Layer</div>
+          <table class="spec-table">
+            <tr><td class="spec-label">Component</td><td class="spec-value" id="specLayerName">WorkoutPortal (Container)</td></tr>
+            <tr><td class="spec-label">Corner Radius</td><td class="spec-value" id="specRadius">40px (shell)</td></tr>
+            <tr><td class="spec-label">Border Stroke</td><td class="spec-value" id="specBorder">3px Solid #111</td></tr>
+          </table>
+          
+          <div class="code-title">CSS styling tokens</div>
+          <div class="code-box" id="cssSnippet">:root {
+  --primary: #10B981;
+  --bg-app: #050b14;
+  --surface-glass: rgba(15, 23, 42, 0.65);
+}</div>
+        </div>
+
+        <div class="inspector-card">
+          <div class="inspector-card-title"><i class="bi bi-cpu"></i>Clinical Restrictions</div>
+          <div style="font-size:11px; line-height:1.5; color:var(--text-dim)">
+            <strong style="color:#fff">Hard Constraint:</strong> Avoid "Overhead Pressing" completely.<br>
+            <strong style="color:#fff">Soft Constraint:</strong> Squat limit is 60kg load.
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // INITIAL MOCKUP DATA
+    const INITIAL_CATALOG = [
+      { id: 'ex_db_press', name: 'Dumbbell Flat Press', category: 'Compound', primary: 'chest', contributions: { chest: 1.0 }, equipment: 'dumbbell', level: 'beginner' },
+      { id: 'ex_db_lateral', name: 'Dumbbell Lateral Raise', category: 'Isolation', primary: 'shoulders', contributions: { shoulders: 1.0 }, equipment: 'dumbbell', level: 'beginner' },
+      { id: 'ex_db_inc_press', name: 'Incline Dumbbell Press', category: 'Compound', primary: 'chest', contributions: { chest: 0.8, shoulders: 0.2 }, equipment: 'dumbbell', level: 'intermediate' },
+      { id: 'ex_cable_tri', name: 'Cable Triceps Overhead Ext', category: 'Isolation', primary: 'triceps', contributions: { triceps: 1.0 }, equipment: 'cable', level: 'intermediate' },
+      { id: 'ex_bb_squat', name: 'Barbell Back Squat', category: 'Compound', primary: 'quads', contributions: { quads: 0.7, glutes: 0.3 }, equipment: 'barbell', level: 'intermediate' },
+      { id: 'ex_bb_rdl', name: 'Romanian Deadlift', category: 'Compound', primary: 'hamstrings', contributions: { hamstrings: 0.6, glutes: 0.4 }, equipment: 'barbell', level: 'intermediate' },
+      { id: 'ex_leg_ext', name: 'Leg Extension', category: 'Isolation', primary: 'quads', contributions: { quads: 1.0 }, equipment: 'machine', level: 'beginner' },
+      { id: 'ex_calf_raise', name: 'Standing Calf Raise', category: 'Isolation', primary: 'calves', contributions: { calves: 1.0 }, equipment: 'bodyweight', level: 'beginner' },
+      { id: 'ex_leg_raise', name: 'Hanging Leg Raise', category: 'Compound', primary: 'core', contributions: { core: 1.0 }, equipment: 'bodyweight', level: 'advanced' },
+      { id: 'ex_plank', name: 'Plank', category: 'Isolation', primary: 'core', contributions: { core: 1.0 }, equipment: 'bodyweight', level: 'beginner' },
+      { id: 'ex_kb_swing', name: 'Kettlebell Swing', category: 'Compound', primary: 'glutes', contributions: { glutes: 0.5, hamstrings: 0.5 }, equipment: 'dumbbell', level: 'intermediate' },
+      { id: 'ex_ohp', name: 'Overhead Press (Barbell)', category: 'Compound', primary: 'shoulders', contributions: { shoulders: 0.8, triceps: 0.2 }, equipment: 'barbell', level: 'intermediate' }
+    ];
+
+    const CLINICAL_CONSTRAINTS = [
+      { key: 'overhead_press', exerciseId: 'ex_ohp', type: 'hard', name: 'Overhead Pressing', detail: 'Avoid shoulder overhead flexion movements completely.' },
+      { key: 'squat_weight', exerciseId: 'ex_bb_squat', type: 'soft', name: 'Squats (Barbell)', detail: 'Keep loads strictly below bodyweight limit.', limit: 'Max 60kg load' }
+    ];
+
+    // GLOBAL APP STATE
+    let currentActiveTab = 'current';
+    let selectedPainValue = 8;
+    let selectedDayIndex = 0; // Active Day in Builder
+    let activeCarouselDayIndex = 0;
+    
+    // Muscle targets database state
+    let targetMap = { chest: 10, quads: 6, shoulders: 6, core: 4, glutes: 6, hamstrings: 6 };
+    let completedMap = { chest: 12, quads: 6, shoulders: 0, core: 4, glutes: 6, hamstrings: 0 };
+    
+    // Performance stats
+    let totalWorkoutsGoal = 4;
+    let completedWorkouts = 3;
+    let completedSetsCount = 28;
+    let totalPlannedSetsCount = 32;
+    let volumeMovedKg = 14500;
+
+    // SAVED TEMPLATES DB
+    let savedTemplates = [
+      {
+        id: 'tpl_1',
+        name: 'Return-to-Sport Base A',
+        frequency: 3,
+        days: [
+          {
+            label: 'Day 1 — Upper Body Push',
+            exercises: [
+              { id: 'e1', exerciseId: 'ex_db_press', name: 'Dumbbell Flat Press', muscle: 'chest', sets: 3, reps: '8-12', rir: 2, tempo: '3-1-2-0', rest: 90, weight: '24kg', notes: 'Warm up thoroughly', groupId: 'group_A', warmup: false, contributions: { chest: 1.0 } },
+              { id: 'e2', exerciseId: 'ex_db_lateral', name: 'Dumbbell Lateral Raise', muscle: 'shoulders', sets: 3, reps: '12-15', rir: 1, tempo: '2-0-1-0', rest: 90, weight: '8kg', notes: 'Slight incline forward', groupId: 'group_A', warmup: false, contributions: { shoulders: 1.0 } },
+              { id: 'e3', exerciseId: 'ex_db_inc_press', name: 'Incline Dumbbell Press', muscle: 'chest', sets: 3, reps: '10', rir: 2, tempo: '3-0-1-0', rest: 90, weight: '20kg', notes: 'Control transition', groupId: null, warmup: false, contributions: { chest: 0.8, shoulders: 0.2 } },
+              { id: 'e4', exerciseId: 'ex_cable_tri', name: 'Cable Triceps Overhead Ext', muscle: 'triceps', sets: 3, reps: '12', rir: 1, tempo: '2-1-2-0', rest: 90, weight: '15kg', notes: 'Keep elbows tucked', groupId: null, warmup: false, contributions: { triceps: 1.0 } }
+            ]
+          },
+          {
+            label: 'Day 2 — Lower Body Squat Focus',
+            exercises: [
+              { id: 'e5', exerciseId: 'ex_bb_squat', name: 'Barbell Back Squat', muscle: 'quads', sets: 3, reps: '8', rir: 2, tempo: '3-1-1-0', rest: 120, weight: '50kg', notes: 'Soft constraint: max 60kg load', groupId: null, warmup: false, contributions: { quads: 0.7, glutes: 0.3 } },
+              { id: 'e6', exerciseId: 'ex_bb_rdl', name: 'Romanian Deadlift', muscle: 'hamstrings', sets: 3, reps: '10', rir: 2, tempo: '3-0-1-0', rest: 90, weight: '60kg', notes: 'Push hips back', groupId: null, warmup: false, contributions: { hamstrings: 0.6, glutes: 0.4 } },
+              { id: 'e7', exerciseId: 'ex_leg_ext', name: 'Leg Extension', muscle: 'quads', sets: 3, reps: '12', rir: 1, tempo: '2-0-2-1', rest: 90, weight: '30kg', notes: 'Hold contraction', groupId: null, warmup: false, contributions: { quads: 1.0 } },
+              { id: 'e8', exerciseId: 'ex_calf_raise', name: 'Standing Calf Raise', muscle: 'calves', sets: 3, reps: '15', rir: 0, tempo: '2-1-2-1', rest: 60, weight: 'BW', notes: 'Full extension', groupId: null, warmup: false, contributions: { calves: 1.0 } }
+            ]
+          },
+          {
+            label: 'Day 3 — Core & Conditioning',
+            exercises: [
+              { id: 'e9', exerciseId: 'ex_leg_raise', name: 'Hanging Leg Raise', muscle: 'core', sets: 3, reps: '12', rir: 1, tempo: 'Controlled', rest: 90, weight: 'BW', notes: 'Keep body straight', groupId: null, warmup: false, contributions: { core: 1.0 } },
+              { id: 'e10', exerciseId: 'ex_plank', name: 'Plank', muscle: 'core', sets: 3, reps: '60s', rir: 0, tempo: 'Hold', rest: 60, weight: 'BW', notes: 'Engage glutes', groupId: null, warmup: false, contributions: { core: 1.0 } },
+              { id: 'e11', exerciseId: 'ex_kb_swing', name: 'Kettlebell Swing', muscle: 'glutes', sets: 3, reps: '20', rir: 2, tempo: 'Explosive', rest: 90, weight: '16kg', notes: 'Hinges from hips', groupId: null, warmup: false, contributions: { glutes: 0.5, hamstrings: 0.5 } }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'tpl_2',
+        name: 'Strength Phase 1',
+        frequency: 2,
+        days: [
+          {
+            label: 'Day 1 — Upper Split',
+            exercises: [
+              { id: 'e12', exerciseId: 'ex_db_press', name: 'Dumbbell Flat Press', muscle: 'chest', sets: 4, reps: '6-8', rir: 3, tempo: '4-0-1-0', rest: 120, weight: '28kg', notes: 'Focus on load progression', groupId: null, warmup: false, contributions: { chest: 1.0 } }
+            ]
+          },
+          {
+            label: 'Day 2 — Lower Split',
+            exercises: [
+              { id: 'e13', exerciseId: 'ex_bb_rdl', name: 'Romanian Deadlift', muscle: 'hamstrings', sets: 4, reps: '6-8', rir: 3, tempo: '4-0-1-0', rest: 120, weight: '70kg', notes: 'Maintain spine posture', groupId: null, warmup: false, contributions: { hamstrings: 0.6, glutes: 0.4 } }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // ACTIVE BUILDER DRAFT STATE
+    let builderProgram = {
+      name: 'Hypertrophy Base A',
+      frequency: 3,
+      days: JSON.parse(JSON.stringify(savedTemplates[0].days)) // Deep copy default
+    };
+
+    // LIBRARY MODAL FILTERS STATE
+    let libFilterQuery = '';
+    let libFilterEquipment = 'all';
+
+    // FIGMA DETAILS SNIPPETS
+    const layerSpecs = {
+      'clinical-safety': {
+        name: 'ClinicalSafetyNotice (Card)',
+        radius: '14px (radii.md)',
+        border: '1px solid rgba(255,255,255,0.08) + Left Border 3px Solid (colors.danger)',
+        code: `const styles = StyleSheet.create({
+  card: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.danger,
+    padding: spacing.md,
+    backgroundColor: colors.dangerDim,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: radii.md,
+  }
+});`
+      },
+      'day-carousel': {
+        name: 'WorkoutDayCarousel (Snapping Scroll)',
+        radius: '14px (radii.md)',
+        border: '1px solid rgba(16, 185, 129, 0.28) (colors.primaryBorder)',
+        code: `const styles = StyleSheet.create({
+  dayCard: {
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: radii.md,
+  },
+  dayCardActive: {
+    borderColor: colors.primaryBorder,
+    backgroundColor: 'rgba(16, 185, 129, 0.03)',
+  }
+});`
+      },
+      'muscle-heatmap': {
+        name: 'MuscleHeatmapLite (Ledger Grid)',
+        radius: '8px (radii.sm) cells',
+        border: '1px solid rgba(255,255,255,0.08)',
+        code: `const styles = StyleSheet.create({
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  cell: {
+    width: '48%',
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: radii.sm,
+  }
+});`
+      },
+      'perf-analytics': {
+        name: 'PerformanceAnalytics (Glass Stats)',
+        radius: '14px (radii.md)',
+        border: '1px solid rgba(255,255,255,0.08) (colors.borderSubtle)',
+        code: `const styles = StyleSheet.create({
+  card: {
+    padding: spacing.md,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: radii.md,
+  }
+});`
+      },
+      'superset-group': {
+        name: 'SupersetGroup (Left link Border)',
+        radius: 'No radius (border link line)',
+        border: 'Left Border 2px Solid (colors.primary)',
+        code: `const styles = StyleSheet.create({
+  wrapper: {
+    borderLeftWidth: 2,
+    borderLeftColor: colors.primary,
+    paddingLeft: spacing.sm,
+    marginLeft: 4,
+    marginVertical: spacing.xs,
+  }
+});`
+      }
+    };
+
+    // HELPER LOGGING FUNCTION
+    function addEventLog(msg, type = 'event') {
+      const logBox = document.getElementById('interactionLog');
+      const time = new Date().toLocaleTimeString(undefined, { hour12: false });
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="log-time">${time}</span><span class="log-${type}">${type === 'event' ? 'Action:' : type === 'error' ? 'Block:' : 'Info:'}</span> ${msg}`;
+      logBox.appendChild(entry);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // INSPECTOR INTERACTION
+    function highlightInspector(layerKey, title) {
+      const data = layerSpecs[layerKey];
+      if (!data) return;
+
+      document.getElementById('specLayerName').textContent = data.name;
+      document.getElementById('specRadius').textContent = data.radius;
+      document.getElementById('specBorder').textContent = data.border;
+      document.getElementById('cssSnippet').textContent = data.code;
+      addEventLog(`Inspected Figma Layer [${data.name}]`, 'info');
+    }
+
+    // MAIN TAB NAV CONTROLS
+    function switchAppTab(tab) {
+      currentActiveTab = tab;
+      
+      // Toggle Views
+      document.querySelectorAll('.tab-content').forEach(view => {
+        view.classList.remove('active');
+      });
+      
+      // Toggle buttons
+      document.getElementById('btnTabCurrent').classList.remove('active');
+      document.getElementById('btnTabSaved').classList.remove('active');
+      document.getElementById('btnTabBuilder').classList.remove('active');
+
+      const btnIdMap = { current: 'btnTabCurrent', saved: 'btnTabSaved', builder: 'btnTabBuilder' };
+      const contentIdMap = { current: 'tabContentCurrent', saved: 'tabContentSaved', builder: 'tabContentBuilder' };
+
+      document.getElementById(btnIdMap[tab]).classList.add('active');
+      document.getElementById(contentIdMap[tab]).classList.add('active');
+
+      addEventLog(`Switched Main App Tab to "${tab.toUpperCase()}"`, 'event');
+
+      if (tab === 'current') {
+        renderCurrentPlan();
+        highlightInspector('day-carousel');
+      } else if (tab === 'saved') {
+        renderSavedTemplates();
+      } else if (tab === 'builder') {
+        renderBuilderCanvas();
+        renderBuilderHeatmap();
+      }
+    }
+
+    // COLLAPSE/EXPAND SAFETY BANNER
+    function toggleSafetyNotice() {
+      const details = document.getElementById('safetyDetails');
+      const chevron = document.getElementById('safetyChevron');
+      const collapsed = details.classList.toggle('collapsed');
+      
+      chevron.className = collapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+      addEventLog(`${collapsed ? 'Collapsed' : 'Expanded'} Clinical Safety details notice`, 'event');
+      highlightInspector('clinical-safety');
+    }
+
+    // ──────────────── RENDERING TAB 1: CURRENT PLAN ────────────────
+    function renderCurrentPlan() {
+      const container = document.getElementById('currentDayCarousel');
+      container.innerHTML = '';
+
+      // Find return-to-sport program
+      const currentPlan = savedTemplates[0];
+
+      currentPlan.days.forEach((day, idx) => {
+        const card = document.createElement('div');
+        card.className = `glass-card day-card ${idx === activeCarouselDayIndex ? 'active' : ''}`;
+        card.id = `currentDayCard-${idx}`;
+        card.onclick = () => {
+          activeCarouselDayIndex = idx;
+          renderCurrentPlan();
+          highlightInspector('day-carousel');
+        };
+
+        // Compute muscle progress percentages based on target
+        let progressHtml = '';
+        const dayMuscles = [...new Set(day.exercises.map(ex => ex.muscle))].slice(0, 3);
+        
+        dayMuscles.forEach(m => {
+          const planned = day.exercises.filter(ex => ex.muscle === m).reduce((sum, ex) => sum + ex.sets, 0);
+          const trg = targetMap[m] || 6;
+          const pct = Math.min(100, Math.round((planned / trg) * 100));
+          
+          progressHtml += `
+            <div class="muscle-progress-box">
+              <div class="muscle-progress-label">${m}</div>
+              <div class="progress-track">
+                <div class="progress-fill" style="width: ${pct}%;"></div>
+              </div>
+            </div>
+          `;
+        });
+
+        // Compute exercise list previews
+        let previewExercisesHtml = '';
+        day.exercises.forEach((ex, exIdx) => {
+          previewExercisesHtml += `
+            <div class="preview-row">
+              <div class="preview-idx">${exIdx + 1}</div>
+              <div class="flex-grow-1">
+                <span class="preview-name">${ex.name}</span>
+                <div class="preview-meta">${ex.sets} sets &times; ${ex.reps} reps &middot; RIR ${ex.rir} &middot; ${ex.weight}</div>
+              </div>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="day-header">
+            <div>
+              <div class="day-title">${day.label}</div>
+              <div class="day-stats">${day.exercises.length} Exercises &middot; ${day.exercises.length * 10 + 10} mins</div>
+            </div>
+            ${idx === activeCarouselDayIndex ? '<span class="day-badge">Active Focus</span>' : ''}
+          </div>
+          
+          <div class="muscles-progress">
+            ${progressHtml || '<div style="font-size:10px;color:var(--text-dim)">No muscle target data</div>'}
+          </div>
+          
+          <div class="day-actions">
+            <button class="app-btn app-btn-outline" onclick="toggleCurrentDayPreview(${idx}, event)">
+              <i class="bi bi-eye"></i>Preview
+            </button>
+            <button class="app-btn app-btn-primary" onclick="openReadinessModal(${idx}, event)">
+              <i class="bi bi-play-fill"></i>Start Session
+            </button>
+          </div>
+
+          <div class="carousel-preview-panel collapsed" id="currentPreviewPanel-${idx}">
+            ${previewExercisesHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      renderCurrentHeatmap();
+      updatePerformanceStats();
+    }
+
+    function toggleCurrentDayPreview(idx, event) {
+      event.stopPropagation();
+      const panel = document.getElementById(`currentPreviewPanel-${idx}`);
+      const collapsed = panel.classList.toggle('collapsed');
+      addEventLog(`${collapsed ? 'Collapsed' : 'Expanded'} Preview panel for ${savedTemplates[0].days[idx].label}`, 'event');
+    }
+
+    // CURRENT PLAN HEATMAP RENDERING
+    function renderCurrentHeatmap() {
+      const grid = document.getElementById('currentHeatmapGrid');
+      grid.innerHTML = '';
+
+      Object.keys(targetMap).forEach(muscle => {
+        const planned = completedMap[muscle] || 0;
+        const target = targetMap[muscle] || 0;
+        const ratio = target > 0 ? planned / target : 0;
+
+        let statusColor = 'rgba(16, 185, 129, 0.25)'; // Planned (light emerald)
+        let borderIndicator = 'rgba(16, 185, 129, 0.25)';
+        if (planned >= target && target > 0) {
+          statusColor = 'var(--primary)';
+          borderIndicator = 'var(--primary)';
+        }
+        if (planned > target) {
+          statusColor = 'var(--warning)';
+          borderIndicator = 'var(--warning)';
+        }
+
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell';
+        cell.style.borderLeft = `3px solid ${borderIndicator}`;
+        cell.onclick = () => openMuscleDetailModal(muscle);
+
+        cell.innerHTML = `
+          <div class="cell-left">
+            <span class="cell-name">${muscle.charAt(0).toUpperCase() + muscle.slice(1)}</span>
+            <span class="cell-sets">${planned} / ${target} sets</span>
+          </div>
+          <div class="cell-status-dot" style="background-color: ${statusColor}"></div>
+        `;
+        grid.appendChild(cell);
+      });
+    }
+
+    // UPDATE PERFORMANCE METRICS
+    function updatePerformanceStats() {
+      document.getElementById('statWorkoutsVal').textContent = `${completedWorkouts} of ${totalWorkoutsGoal}`;
+      document.getElementById('statAdherenceVal').textContent = `${completedSetsCount} / ${totalPlannedSetsCount}`;
+      document.getElementById('statVolumeVal').textContent = `${volumeMovedKg.toLocaleString()} kg`;
+    }
+
+    // ──────────────── RENDERING TAB 2: SAVED TEMPLATES ────────────────
+    function renderSavedTemplates() {
+      const container = document.getElementById('savedTemplatesList');
+      container.innerHTML = '';
+
+      savedTemplates.forEach((tpl, idx) => {
+        const card = document.createElement('div');
+        card.className = 'glass-card saved-card';
+
+        // Calculate total stats
+        const totalDays = tpl.days.length;
+        const totalExercises = tpl.days.reduce((sum, d) => sum + d.exercises.length, 0);
+
+        card.innerHTML = `
+          <div class="saved-header-row">
+            <div>
+              <div class="saved-plan-title">${tpl.name}</div>
+              <div class="saved-plan-meta">${totalDays} days/week &middot; ${totalExercises} exercises</div>
+            </div>
+            ${idx === 0 ? '<span class="badge-staged">Active</span>' : ''}
+          </div>
+          <div class="saved-actions">
+            <button class="action-btn-link text-primary" onclick="loadTemplateToBuilder('${tpl.id}')">
+              <i class="bi bi-pencil-square"></i>Edit Plan
+            </button>
+            <button class="action-btn-link action-btn-link-danger" onclick="deleteSavedTemplate('${tpl.id}')">
+              <i class="bi bi-trash"></i>Delete
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Add "Create new" entry card
+      const ctaCard = document.createElement('div');
+      ctaCard.className = 'glass-card empty-state-card';
+      ctaCard.innerHTML = `
+        <i class="bi bi-wrench-adjustable empty-icon"></i>
+        <div class="card-title">Open Workout Builder</div>
+        <div class="card-subtitle">Create a brand-new program template with constraints and superset tools.</div>
+        <button class="app-btn app-btn-outline" style="max-width:140px; padding: 6px 12px; margin-top:4px" onclick="createNewTemplate()">New Template</button>
+      `;
+      container.appendChild(ctaCard);
+    }
+
+    function loadTemplateToBuilder(tplId) {
+      const tpl = savedTemplates.find(t => t.id === tplId);
+      if (!tpl) return;
+
+      builderProgram = {
+        name: tpl.name,
+        frequency: tpl.frequency,
+        days: JSON.parse(JSON.stringify(tpl.days))
+      };
+      
+      selectedDayIndex = 0;
+      switchAppTab('builder');
+      addEventLog(`Loaded template "${tpl.name}" into Workout Builder`, 'event');
+    }
+
+    function createNewTemplate() {
+      builderProgram = {
+        name: 'New Custom Draft',
+        frequency: 3,
+        days: [
+          { label: 'Day 1 — Workout', exercises: [] },
+          { label: 'Day 2 — Workout', exercises: [] },
+          { label: 'Day 3 — Workout', exercises: [] }
+        ]
+      };
+      selectedDayIndex = 0;
+      switchAppTab('builder');
+      addEventLog('Created new empty workout template', 'event');
+    }
+
+    function deleteSavedTemplate(tplId) {
+      if (savedTemplates.length <= 1) {
+        alert("Cannot delete the only remaining template. Keep at least one baseline.");
+        return;
+      }
+      const tpl = savedTemplates.find(t => t.id === tplId);
+      savedTemplates = savedTemplates.filter(t => t.id !== tplId);
+      renderSavedTemplates();
+      addEventLog(`Deleted template "${tpl.name}"`, 'event');
+    }
+
+    // ──────────────── RENDERING TAB 3: WORKOUT BUILDER ────────────────
+    function updateProgramName(val) {
+      builderProgram.name = val;
+    }
+
+    function changeDaysCount(count) {
+      const c = parseInt(count);
+      builderProgram.frequency = c;
+      
+      const currentDays = builderProgram.days;
+      while (currentDays.length < c) {
+        currentDays.push({
+          label: `Day ${currentDays.length + 1} — Workout`,
+          exercises: []
+        });
+      }
+      if (currentDays.length > c) {
+        currentDays.length = c;
+      }
+      selectedDayIndex = Math.min(selectedDayIndex, c - 1);
+      renderBuilderCanvas();
+      addEventLog(`Adjusted Builder template frequency to ${c} days`, 'event');
+    }
+
+    function renderBuilderCanvas() {
+      // Days subnav
+      const nav = document.getElementById('builderDaysNav');
+      nav.innerHTML = '';
+
+      builderProgram.days.forEach((day, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `day-tab-btn ${idx === selectedDayIndex ? 'active' : ''}`;
+        btn.textContent = `Day ${idx + 1}`;
+        btn.onclick = () => {
+          selectedDayIndex = idx;
+          renderBuilderCanvas();
+        };
+        nav.appendChild(btn);
+      });
+
+      // Exercises Canvas list
+      const canvas = document.getElementById('builderWorkoutCanvas');
+      canvas.innerHTML = '';
+
+      const activeDay = builderProgram.days[selectedDayIndex];
+      document.getElementById('builderProgramName').value = builderProgram.name;
+      document.getElementById('builderDaysCount').value = builderProgram.frequency;
+
+      if (!activeDay || activeDay.exercises.length === 0) {
+        canvas.innerHTML = `<div class="empty-day-msg">Empty training day.<br>Tap "Add Exercise" below to pick from library.</div>`;
+        updateBuilderVolumeStats();
+        return;
+      }
+
+      // Group exercises by superset groupId
+      let renderedIds = new Set();
+      
+      activeDay.exercises.forEach((ex, idx) => {
+        if (renderedIds.has(ex.id)) return;
+
+        if (ex.groupId) {
+          // It's a grouped superset
+          const groupExercises = activeDay.exercises.filter(e => e.groupId === ex.groupId);
+          const groupWrapper = document.createElement('div');
+          groupWrapper.className = 'superset-group-wrapper';
+
+          // Add header
+          const groupHeader = document.createElement('div');
+          groupHeader.className = 'superset-group-header';
+          groupHeader.innerHTML = `
+            <i class="bi bi-link-45deg" style="color:var(--primary)"></i>
+            <span class="superset-group-title">Superset Group</span>
+            <div class="superset-group-divider"></div>
+            <span class="superset-group-rest">${ex.rest}s Rest</span>
+            <button class="action-btn-link text-primary" style="font-size:9px;" onclick="ungroupSuperset('${ex.groupId}')">Ungroup</button>
+          `;
+          canvas.appendChild(groupHeader);
+
+          groupExercises.forEach(groupedEx => {
+            renderedIds.add(groupedEx.id);
+            const card = createExerciseCard(groupedEx, activeDay.exercises.indexOf(groupedEx));
+            groupWrapper.appendChild(card);
+          });
+          
+          canvas.appendChild(groupWrapper);
+        } else {
+          // Regular exercise card
+          renderedIds.add(ex.id);
+          const card = createExerciseCard(ex, idx);
+          canvas.appendChild(card);
+        }
+      });
+
+      updateBuilderVolumeStats();
+    }
+
+    // GENERATE CARD DOM
+    function createExerciseCard(ex, idx) {
+      const card = document.createElement('div');
+      card.className = 'glass-card builder-ex-card';
+      card.id = `builderCard-${ex.id}`;
+
+      // Check soft constraint warning
+      const constraint = CLINICAL_CONSTRAINTS.find(c => c.exerciseId === ex.exerciseId);
+      const hasWarning = constraint && constraint.type === 'soft';
+
+      let constraintWarningHtml = '';
+      if (hasWarning) {
+        constraintWarningHtml = `
+          <div class="constraint-item" style="background-color:var(--warning-dim); border:1px solid var(--warning-border); padding:6px; margin-top:4px">
+            <div style="font-size:9.5px; font-weight:700; color:var(--warning); display:flex; align-items:center; gap:4px">
+              <i class="bi bi-warning-amber"></i>Soft Restriction: ${constraint.name}
+            </div>
+            <div style="font-size:9px; color:var(--text-sub)">Limit: ${constraint.limit} &middot; ${constraint.detail}</div>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="builder-ex-top">
+          <div class="builder-ex-title-sec" onclick="toggleCardEditor('${ex.id}')">
+            <div class="builder-ex-name">${ex.name}</div>
+            <div class="builder-ex-muscle-tag">${ex.muscle} ${ex.warmup ? '&middot; WARMUP' : ''}</div>
+            ${constraintWarningHtml}
+          </div>
+          <div class="builder-ex-actions">
+            <button class="builder-ex-btn" title="Duplicate" onclick="duplicateExercise('${ex.id}', event)"><i class="bi bi-copy"></i></button>
+            <button class="builder-ex-btn" title="Delete" style="color:var(--danger)" onclick="deleteExercise('${ex.id}', event)"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+
+        <div class="builder-ex-grid">
+          <div class="stepper-control">
+            <span class="stepper-label">Sets</span>
+            <button class="stepper-btn" onclick="updateSets('${ex.id}', -1, event)">-</button>
+            <span class="stepper-num" id="setsVal-${ex.id}">${ex.sets}</span>
+            <button class="stepper-btn" onclick="updateSets('${ex.id}', 1, event)">+</button>
+          </div>
+          
+          <div class="stepper-control">
+            <span class="stepper-label">Reps</span>
+            <button class="stepper-btn" onclick="updateReps('${ex.id}', -1, event)">-</button>
+            <span class="stepper-num" id="repsVal-${ex.id}">${ex.reps}</span>
+            <button class="stepper-btn" onclick="updateReps('${ex.id}', 1, event)">+</button>
+          </div>
+
+          <div class="stepper-control">
+            <span class="stepper-label">RIR</span>
+            <button class="stepper-btn" onclick="updateRir('${ex.id}', -1, event)">-</button>
+            <span class="stepper-num" id="rirVal-${ex.id}">${ex.rir}</span>
+            <button class="stepper-btn" onclick="updateRir('${ex.id}', 1, event)">+</button>
+          </div>
+        </div>
+
+        <!-- COLLAPSIBLE DETAILED EDITOR -->
+        <div class="builder-ex-expand collapsed" id="exEditor-${ex.id}">
+          <div class="ex-expand-row">
+            <div class="ex-expand-col">
+              <span class="ex-expand-label">Load/Weight</span>
+              <input type="text" class="ex-expand-input" value="${ex.weight}" oninput="updateWeight('${ex.id}', this.value)" placeholder="e.g. 20kg or BW">
+            </div>
+            <div class="ex-expand-col">
+              <span class="ex-expand-label">Tempo</span>
+              <input type="text" class="ex-expand-input" value="${ex.tempo}" oninput="updateTempo('${ex.id}', this.value)" placeholder="e.g. 3-0-1-0">
+            </div>
+          </div>
+          
+          <div class="ex-expand-row">
+            <div class="ex-expand-col">
+              <span class="ex-expand-label">Rest Period</span>
+              <div class="stepper-control" style="max-width:110px">
+                <button class="stepper-btn" onclick="updateRest('${ex.id}', -15, event)">-</button>
+                <span class="stepper-num" id="restVal-${ex.id}">${ex.rest}s</span>
+                <button class="stepper-btn" onclick="updateRest('${ex.id}', 15, event)">+</button>
+              </div>
+            </div>
+            <div class="ex-expand-col">
+              <div class="ex-expand-switch-row d-flex">
+                <span class="ex-expand-label" style="margin-top:0">Warmup set</span>
+                <div class="switch-btn ${ex.warmup ? 'active' : ''}" onclick="toggleWarmup('${ex.id}')">
+                  <div class="switch-dot"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ex-expand-col">
+            <span class="ex-expand-label">Cues & Setup Notes</span>
+            <input type="text" class="ex-expand-input" value="${ex.notes}" oninput="updateNotes('${ex.id}', this.value)" placeholder="Enter safety setup cues...">
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px">
+            <span style="font-size:9.5px; color:var(--text-dim)">Group as superset with adjacent?</span>
+            <button class="app-btn app-btn-outline" style="padding: 2px 8px; flex:none; font-size:10px;" onclick="groupExercise('${ex.id}')">Group</button>
+          </div>
+        </div>
+      `;
+
+      return card;
+    }
+
+    // ACTIONS IN BUILDER CARDS
+    function toggleCardEditor(exId) {
+      const panel = document.getElementById(`exEditor-${exId}`);
+      panel.classList.toggle('collapsed');
+      highlightInspector('day-carousel');
+    }
+
+    function updateSets(exId, delta, event) {
+      event.stopPropagation();
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (!ex) return;
+      ex.sets = Math.max(1, ex.sets + delta);
+      document.getElementById(`setsVal-${exId}`).textContent = ex.sets;
+      updateBuilderVolumeStats();
+    }
+
+    function updateReps(exId, delta, event) {
+      event.stopPropagation();
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (!ex) return;
+      
+      let val = parseInt(ex.reps) || 10;
+      val = Math.max(1, val + delta);
+      ex.reps = String(val);
+      document.getElementById(`repsVal-${exId}`).textContent = ex.reps;
+    }
+
+    function updateRir(exId, delta, event) {
+      event.stopPropagation();
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (!ex) return;
+      ex.rir = Math.max(0, Math.min(5, ex.rir + delta));
+      document.getElementById(`rirVal-${exId}`).textContent = ex.rir;
+    }
+
+    function updateWeight(exId, val) {
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (ex) ex.weight = val;
+    }
+
+    function updateTempo(exId, val) {
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (ex) ex.tempo = val;
+    }
+
+    function updateRest(exId, delta, event) {
+      event.stopPropagation();
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (!ex) return;
+      ex.rest = Math.max(30, ex.rest + delta);
+      document.getElementById(`restVal-${exId}`).textContent = `${ex.rest}s`;
+    }
+
+    function updateNotes(exId, val) {
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (ex) ex.notes = val;
+    }
+
+    function toggleWarmup(exId) {
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      if (!ex) return;
+      ex.warmup = !ex.warmup;
+      renderBuilderCanvas();
+      addEventLog(`Toggled Warmup Set state for exercise "${ex.name}"`, 'event');
+    }
+
+    function duplicateExercise(exId, event) {
+      event.stopPropagation();
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const idx = activeDay.exercises.findIndex(e => e.id === exId);
+      if (idx === -1) return;
+
+      const source = activeDay.exercises[idx];
+      const copy = {
+        ...JSON.parse(JSON.stringify(source)),
+        id: 'ex_' + Math.random().toString(36).substr(2, 9),
+      };
+
+      activeDay.exercises.splice(idx + 1, 0, copy);
+      renderBuilderCanvas();
+      addEventLog(`Duplicated exercise "${source.name}"`, 'event');
+    }
+
+    function deleteExercise(exId, event) {
+      event.stopPropagation();
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const ex = activeDay.exercises.find(e => e.id === exId);
+      activeDay.exercises = activeDay.exercises.filter(e => e.id !== exId);
+      renderBuilderCanvas();
+      addEventLog(`Removed exercise "${ex.name}" from draft`, 'event');
+    }
+
+    // GROUP / SUPERSET LOGIC
+    function groupExercise(exId) {
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const idx = activeDay.exercises.findIndex(e => e.id === exId);
+      if (idx === -1 || idx === activeDay.exercises.length - 1) {
+        alert("Cannot group this exercise: require an adjacent succeeding exercise.");
+        return;
+      }
+
+      // Check if either is already in a group
+      const ex1 = activeDay.exercises[idx];
+      const ex2 = activeDay.exercises[idx + 1];
+
+      const newGroupId = ex1.groupId || ex2.groupId || 'group_' + Math.random().toString(36).substr(2, 9);
+      ex1.groupId = newGroupId;
+      ex2.groupId = newGroupId;
+
+      renderBuilderCanvas();
+      addEventLog(`Grouped "${ex1.name}" & "${ex2.name}" as a Superset`, 'event');
+      highlightInspector('superset-group');
+    }
+
+    function ungroupSuperset(groupId) {
+      const activeDay = builderProgram.days[selectedDayIndex];
+      activeDay.exercises.forEach(ex => {
+        if (ex.groupId === groupId) {
+          ex.groupId = null;
+        }
+      });
+      renderBuilderCanvas();
+      addEventLog(`Ungrouped superset elements`, 'event');
+    }
+
+    // ──────────────── BUILDER VOLUME SUMMARY & HEATMAP ────────────────
+    function updateBuilderVolumeStats() {
+      let totalSets = 0;
+      builderProgram.days.forEach(day => {
+        day.exercises.forEach(ex => {
+          if (!ex.warmup) totalSets += ex.sets;
+        });
+      });
+      document.getElementById('builderVolumeSummary').textContent = `Total Sets: ${totalSets}`;
+    }
+
+    function renderBuilderHeatmap() {
+      const grid = document.getElementById('builderHeatmapGrid');
+      grid.innerHTML = '';
+
+      // Compute builder draft volume map
+      let draftVolumeMap = { chest: 0, quads: 0, shoulders: 0, core: 0, glutes: 0, hamstrings: 0 };
+      builderProgram.days.forEach(day => {
+        day.exercises.forEach(ex => {
+          if (ex.warmup) return;
+          const contribs = ex.contributions || {};
+          Object.keys(contribs).forEach(m => {
+            if (draftVolumeMap[m] !== undefined) {
+              draftVolumeMap[m] += ex.sets * contribs[m];
+            }
+          });
+        });
+      });
+
+      Object.keys(targetMap).forEach(muscle => {
+        const planned = Math.round(draftVolumeMap[muscle] * 10) / 10;
+        const target = targetMap[muscle] || 0;
+        
+        let statusColor = 'rgba(16, 185, 129, 0.25)';
+        let borderIndicator = 'rgba(16, 185, 129, 0.25)';
+        if (planned >= target && target > 0) {
+          statusColor = 'var(--primary)';
+          borderIndicator = 'var(--primary)';
+        }
+        if (planned > target) {
+          statusColor = 'var(--warning)';
+          borderIndicator = 'var(--warning)';
+        }
+
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell';
+        cell.style.borderLeft = `3px solid ${borderIndicator}`;
+        cell.onclick = () => {
+          // Adjust target for muscle
+          const delta = prompt(`Change target sets for ${muscle} (current target: ${target} sets):`, target);
+          const parsed = parseInt(delta);
+          if (Number.isFinite(parsed) && parsed >= 0) {
+            targetMap[muscle] = parsed;
+            renderBuilderHeatmap();
+            addEventLog(`Adjusted ${muscle} weekly volume target to ${parsed} sets`, 'event');
+          }
+        };
+
+        cell.innerHTML = `
+          <div class="cell-left">
+            <span class="cell-name">${muscle.charAt(0).toUpperCase() + muscle.slice(1)}</span>
+            <span class="cell-sets">${planned} / ${target} sets</span>
+          </div>
+          <div class="cell-status-dot" style="background-color: ${statusColor}"></div>
+        `;
+        grid.appendChild(cell);
+      });
+      highlightInspector('muscle-heatmap');
+    }
+
+    // ──────────────── WORKOUT SAVE FLOW ────────────────
+    function saveProgramDraft() {
+      // Find if we are editing an existing template or saving new
+      const matchedIdx = savedTemplates.findIndex(t => t.name === builderProgram.name);
+      
+      const newTemplate = {
+        id: matchedIdx !== -1 ? savedTemplates[matchedIdx].id : 'tpl_' + Math.random().toString(36).substr(2, 9),
+        name: builderProgram.name,
+        frequency: builderProgram.frequency,
+        days: JSON.parse(JSON.stringify(builderProgram.days))
+      };
+
+      if (matchedIdx !== -1) {
+        savedTemplates[matchedIdx] = newTemplate;
+      } else {
+        savedTemplates.push(newTemplate);
+      }
+
+      // Show Success Toast
+      const toast = document.getElementById('toastNotice');
+      document.getElementById('toastNoticeText').textContent = `Saved template "${builderProgram.name}"!`;
+      toast.classList.add('active');
+      setTimeout(() => toast.classList.remove('active'), 2500);
+
+      addEventLog(`Successfully saved program draft "${builderProgram.name}" to library`, 'event');
+      switchAppTab('saved');
+    }
+
+    // ──────────────── EXERCISE LIBRARY OFF-SCREEN MODAL ────────────────
+    function openExerciseLibrary() {
+      document.getElementById('exerciseLibraryModal').classList.add('active');
+      filterLibrary();
+      addEventLog('Opened Exercise Library Catalog', 'event');
+    }
+
+    function closeExerciseLibrary() {
+      document.getElementById('exerciseLibraryModal').classList.remove('active');
+    }
+
+    function filterEquip(equip) {
+      libFilterEquipment = equip;
+      
+      // Update chip classes
+      document.querySelectorAll('.sheet-filter-row .sheet-chip').forEach(chip => {
+        chip.classList.remove('active');
+      });
+      document.getElementById(`chipEquip-${equip}`).classList.add('active');
+      
+      filterLibrary();
+      addEventLog(`Filtered catalog by equipment: "${equip.toUpperCase()}"`, 'event');
+    }
+
+    function filterLibrary() {
+      const q = document.getElementById('libSearch').value.toLowerCase().trim();
+      const list = document.getElementById('libraryItemsList');
+      list.innerHTML = '';
+
+      const compoundItems = [];
+      const isolationItems = [];
+
+      INITIAL_CATALOG.forEach(item => {
+        // Text Match
+        if (q && !item.name.toLowerCase().includes(q)) return;
+        
+        // Equipment match
+        if (libFilterEquipment !== 'all' && item.equipment !== libFilterEquipment) return;
+
+        if (item.category === 'Compound') {
+          compoundItems.push(item);
+        } else {
+          isolationItems.push(item);
+        }
+      });
+
+      // Render Compound
+      if (compoundItems.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'sheet-list-section-title';
+        title.textContent = 'Compound Movements';
+        list.appendChild(title);
+
+        compoundItems.forEach(item => list.appendChild(createLibraryItemRow(item)));
+      }
+
+      // Render Isolation
+      if (isolationItems.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'sheet-list-section-title';
+        title.textContent = 'Isolation Movements';
+        list.appendChild(title);
+
+        isolationItems.forEach(item => list.appendChild(createLibraryItemRow(item)));
+      }
+
+      if (compoundItems.length === 0 && isolationItems.length === 0) {
+        list.innerHTML = `<div class="empty-day-msg" style="border:none">No matching exercises found.</div>`;
+      }
+    }
+
+    function createLibraryItemRow(item) {
+      const row = document.createElement('div');
+      row.className = 'library-item';
+      row.onclick = () => addExerciseToBuilder(item.id);
+
+      // Check constraints
+      const constraint = CLINICAL_CONSTRAINTS.find(c => c.exerciseId === item.id);
+      let restrictBadgeHtml = '';
+      if (constraint) {
+        restrictBadgeHtml = `
+          <span class="constraint-badge ${constraint.type === 'hard' ? 'badge-hard' : 'badge-soft'}" style="font-size:8px; padding:1px 3px">
+            ${constraint.type === 'hard' ? 'Block' : 'Soft'}
+          </span>
+        `;
+      }
+
+      // Render minibar contributions
+      let minibarsHtml = '';
+      Object.keys(item.contributions).forEach(m => {
+        const pct = Math.round(item.contributions[m] * 100);
+        minibarsHtml += `
+          <div class="lib-minibar">
+            <span class="lib-minibar-label">${m}</span>
+            <div class="lib-minibar-track">
+              <div class="lib-minibar-fill" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      row.innerHTML = `
+        <div class="lib-item-left">
+          <div class="lib-item-title-row">
+            <span class="lib-item-name">${item.name}</span>
+            ${restrictBadgeHtml}
+          </div>
+          <div class="lib-item-meta">${item.category} &middot; ${item.equipment} &middot; ${item.level}</div>
+          <div class="lib-item-minibars">${minibarsHtml}</div>
+        </div>
+        <i class="bi bi-plus-circle-fill text-primary" style="font-size:16px"></i>
+      `;
+      return row;
+    }
+
+    // ADD EXERCISE TO CANVAS WITH CONSTRAINT CHECK
+    function addExerciseToBuilder(catalogId) {
+      const item = INITIAL_CATALOG.find(c => c.id === catalogId);
+      if (!item) return;
+
+      // CONSTRAINT CHECK
+      const constraint = CLINICAL_CONSTRAINTS.find(c => c.exerciseId === catalogId);
+      
+      if (constraint && constraint.type === 'hard') {
+        // Hard Block Alert
+        alert(`⚠️ CLINICAL SAFETY BLOCK\n\nThis exercise violates a hard restriction set by Dr. Sarah:\n\nRestriction: [${constraint.name}]\nDetail: ${constraint.detail}\n\nAction barred by Verve safety protocol.`);
+        addEventLog(`Hard Blocked: Checked catalog item "${item.name}" - restricted by clinician`, 'error');
+        return;
+      }
+
+      if (constraint && constraint.type === 'soft') {
+        // Soft Block Warning
+        alert(`⚠️ CLINICAL SAFETY NOTICE\n\nThis exercise has soft constraints set by Dr. Sarah:\n\nRestriction: [${constraint.name}]\nLimit: ${constraint.limit}\nDetail: ${constraint.detail}\n\nProceed with caution.`);
+        addEventLog(`Soft Warned: Added restricted item "${item.name}" with warning badges`, 'info');
+      }
+
+      const activeDay = builderProgram.days[selectedDayIndex];
+      const newEx = {
+        id: 'ex_' + Math.random().toString(36).substr(2, 9),
+        exerciseId: item.id,
+        name: item.name,
+        muscle: item.primary,
+        sets: 3,
+        reps: '10',
+        rir: 2,
+        tempo: '3-0-1-0',
+        rest: 90,
+        weight: item.equipment === 'bodyweight' ? 'BW' : '20kg',
+        notes: '',
+        groupId: null,
+        warmup: false,
+        contributions: item.contributions
+      };
+
+      activeDay.exercises.push(newEx);
+      closeExerciseLibrary();
+      renderBuilderCanvas();
+      renderBuilderHeatmap();
+
+      addEventLog(`Added exercise "${item.name}" to Builder Canvas`, 'event');
+    }
+
+    // ──────────────── CLINICAL SAFETY DETAILS OVERLAY ────────────────
+    function openReadinessModal(dayIdx, event) {
+      if (event) event.stopPropagation();
+      activeCarouselDayIndex = dayIdx;
+      document.getElementById('readinessModal').classList.add('active');
+      addEventLog(`Initiated Readiness checks for ${savedTemplates[0].days[dayIdx].label}`, 'event');
+    }
+
+    function closeReadinessModal() {
+      document.getElementById('readinessModal').classList.remove('active');
+    }
+
+    function selectPainScore(val) {
+      selectedPainValue = val;
+      document.querySelectorAll('.pain-num').forEach(el => {
+        el.classList.remove('active-pain');
+        if (parseInt(el.textContent) === val) el.classList.add('active-pain');
+      });
+      addEventLog(`Subjective Quiz: Knee Pain rated as ${val}/10`, 'event');
+    }
+
+    // FINISH READINESS & START WORKOUT SESSION
+    function startActiveSession() {
+      const notes = document.getElementById('readinessNotes').value;
+      closeReadinessModal();
+      
+      // Simulation: Log completed session
+      completedWorkouts = Math.min(totalWorkoutsGoal, completedWorkouts + 1);
+      
+      // Accumulate logged sets to heatmap
+      const completedDay = savedTemplates[0].days[activeCarouselDayIndex];
+      completedDay.exercises.forEach(ex => {
+        if (ex.warmup) return;
+        const contribs = ex.contributions || {};
+        Object.keys(contribs).forEach(m => {
+          if (completedMap[m] !== undefined) {
+            completedMap[m] = Math.round((completedMap[m] + ex.sets * contribs[m]) * 10) / 10;
+          }
+        });
+        completedSetsCount += ex.sets;
+        volumeMovedKg += ex.sets * (parseInt(ex.reps) || 10) * (parseInt(ex.weight) || 20);
+      });
+
+      alert(`▶ LAUNCHED WORKOUT SESSION\n\nSubjective parameters recorded:\n- Knee Pain: ${selectedPainValue}/10\n- Notes: "${notes || 'None'}"\n\nTracking session sets & heart rate in background...`);
+      
+      renderCurrentPlan();
+      addEventLog(`Active session completed. Rolling ledger values adjusted.`, 'info');
+    }
+
+    // ──────────────── HEATMAP DETAIL DIALOG ────────────────
+    const muscleDetailMockData = {
+      chest: {
+        name: 'Chest Target Sets',
+        completed: 12,
+        target: 10,
+        planned: [
+          { name: 'Dumbbell Flat Press', schedule: 'Day 1 — Upper Body Push', sets: '3 sets (100% contribution)' },
+          { name: 'Incline Dumbbell Press', schedule: 'Day 1 — Upper Body Push', sets: '2.4 sets (80% contribution)' }
+        ],
+        recent: [
+          { name: 'Dumbbell Flat Press', date: 'Jun 8, 2026', sets: '+3 sets completed' },
+          { name: 'Incline Dumbbell Press', date: 'Jun 8, 2026', sets: '+3 sets completed' },
+          { name: 'Dumbbell Flat Press', date: 'Jun 3, 2026', sets: '+3 sets completed' },
+          { name: 'Incline Dumbbell Press', date: 'Jun 3, 2026', sets: '+3 sets completed' }
+        ]
+      },
+      quads: {
+        name: 'Quads Target Sets',
+        completed: 6,
+        target: 6,
+        planned: [
+          { name: 'Barbell Back Squat', schedule: 'Day 2 — Lower Body Squat Focus', sets: '2.1 sets (70% contribution)' },
+          { name: 'Leg Extension', schedule: 'Day 2 — Lower Body Squat Focus', sets: '3 sets (100% contribution)' }
+        ],
+        recent: [
+          { name: 'Barbell Back Squat', date: 'Jun 6, 2026', sets: '+3 sets completed' },
+          { name: 'Leg Extension', date: 'Jun 6, 2026', sets: '+3 sets completed' }
+        ]
+      },
+      shoulders: {
+        name: 'Shoulders Target Sets',
+        completed: 0,
+        target: 6,
+        planned: [
+          { name: 'Dumbbell Lateral Raise', schedule: 'Day 1 — Upper Body Push', sets: '3 sets (100% contribution)' },
+          { name: 'Incline Dumbbell Press', schedule: 'Day 1 — Upper Body Push', sets: '0.6 sets (20% contribution)' }
+        ],
+        recent: []
+      },
+      core: {
+        name: 'Core Target Sets',
+        completed: 4,
+        target: 4,
+        planned: [
+          { name: 'Hanging Leg Raise', schedule: 'Day 3 — Core & Conditioning', sets: '3 sets (100% contribution)' },
+          { name: 'Plank', schedule: 'Day 3 — Core & Conditioning', sets: '3 sets (100% contribution)' }
+        ],
+        recent: [
+          { name: 'Hanging Leg Raise', date: 'Jun 9, 2026', sets: '+3 sets completed' },
+          { name: 'Plank', date: 'Jun 9, 2026', sets: '+1 set completed' }
+        ]
+      },
+      glutes: {
+        name: 'Glutes Target Sets',
+        completed: 6,
+        target: 6,
+        planned: [
+          { name: 'Barbell Back Squat', schedule: 'Day 2 — Lower Body Squat Focus', sets: '0.9 sets (30% contribution)' },
+          { name: 'Romanian Deadlift', schedule: 'Day 2 — Lower Body Squat Focus', sets: '1.2 sets (40% contribution)' },
+          { name: 'Kettlebell Swing', schedule: 'Day 3 — Core & Conditioning', sets: '1.5 sets (50% contribution)' }
+        ],
+        recent: [
+          { name: 'Barbell Back Squat', date: 'Jun 6, 2026', sets: '+3 sets completed' },
+          { name: 'Romanian Deadlift', date: 'Jun 6, 2026', sets: '+3 sets completed' }
+        ]
+      },
+      hamstrings: {
+        name: 'Hamstrings Target Sets',
+        completed: 0,
+        target: 6,
+        planned: [
+          { name: 'Romanian Deadlift', schedule: 'Day 2 — Lower Body Squat Focus', sets: '1.8 sets (60% contribution)' },
+          { name: 'Kettlebell Swing', schedule: 'Day 3 — Core & Conditioning', sets: '1.5 sets (50% contribution)' }
+        ],
+        recent: []
+      }
+    };
+
+    function openMuscleDetailModal(muscle) {
+      const data = muscleDetailMockData[muscle];
+      if (!data) return;
+
+      document.getElementById('modalMuscleTitle').textContent = data.name;
+      document.getElementById('modalCompletedVal').textContent = completedMap[muscle] || 0;
+      document.getElementById('modalTargetVal').textContent = data.target;
+
+      // Adjust completed text color
+      const compVal = completedMap[muscle] || 0;
+      const valColor = compVal > data.target ? 'var(--warning)' : 'var(--primary)';
+      document.getElementById('modalCompletedVal').style.color = valColor;
+
+      // Render Planned list
+      const plannedList = document.getElementById('modalPlannedList');
+      plannedList.innerHTML = '';
+      data.planned.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'pb-redesign-modal-list-row';
+        row.innerHTML = `
+          <div class="pb-redesign-modal-list-left">
+            <span class="pb-redesign-modal-list-name">${p.name}</span>
+            <span class="pb-redesign-modal-list-sub">${p.schedule}</span>
+          </div>
+          <span class="pb-redesign-modal-list-val" style="color:var(--text-sub)">${p.sets}</span>
+        `;
+        plannedList.appendChild(row);
+      });
+
+      // Render Recent logs list
+      const completedList = document.getElementById('modalCompletedList');
+      completedList.innerHTML = '';
+      if (data.recent.length === 0) {
+        completedList.innerHTML = `<div style="font-size:10px; color:var(--text-muted); padding:6px 0;">No completed sets logged in past 7 days.</div>`;
+      } else {
+        data.recent.forEach(log => {
+          const row = document.createElement('div');
+          row.className = 'pb-redesign-modal-list-row';
+          row.innerHTML = `
+            <div class="pb-redesign-modal-list-left">
+              <span class="pb-redesign-modal-list-name">${log.name}</span>
+              <span class="pb-redesign-modal-list-sub">${log.date}</span>
+            </div>
+            <span class="pb-redesign-modal-list-val">${log.sets}</span>
+          `;
+          completedList.appendChild(row);
+        });
+      }
+
+      document.getElementById('heatmapDetailModal').classList.add('active');
+      addEventLog(`Opened detail ledger for muscle target: "${muscle.toUpperCase()}"`, 'event');
+      highlightInspector('muscle-heatmap');
+    }
+
+    function closeHeatmapDetailModal() {
+      document.getElementById('heatmapDetailModal').classList.remove('active');
+    }
+
+    // RESET PROTOTYPE
+    function resetPrototype() {
+      completedMap = { chest: 12, quads: 6, shoulders: 0, core: 4, glutes: 6, hamstrings: 0 };
+      completedWorkouts = 3;
+      completedSetsCount = 28;
+      volumeMovedKg = 14500;
+      
+      builderProgram = {
+        name: 'Return-to-Sport Base A',
+        frequency: 3,
+        days: JSON.parse(JSON.stringify(savedTemplates[0].days))
+      };
+      selectedDayIndex = 0;
+      activeCarouselDayIndex = 0;
+      
+      renderCurrentPlan();
+      addEventLog("Reset prototype variables to sandbox baselines.", "info");
+      
+      if (currentActiveTab === 'current') {
+        renderCurrentPlan();
+      } else if (currentActiveTab === 'saved') {
+        renderSavedTemplates();
+      } else {
+        renderBuilderCanvas();
+        renderBuilderHeatmap();
+      }
+    }
+
+    // INITIAL LAUNCH BOOTSTRAP
+    window.onload = () => {
+      renderCurrentPlan();
+      highlightInspector('day-carousel');
+    };
+  </script>
+</body>
+</html>

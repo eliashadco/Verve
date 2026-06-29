@@ -6,7 +6,7 @@ import { Badge } from '@/components/Badge';
 import { GlassCard } from '@/components/GlassCard';
 import { useConstraints } from '@/hooks/useConstraints';
 import { useTranslation } from '@/lib/i18n';
-import { colors, spacing, typography } from '@/lib/theme';
+import { colors, spacing, typography, radii } from '@/lib/theme';
 
 interface ClinicalSafetyNoticeProps {
   clientId: string | null;
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   constraintRow: {
     backgroundColor: colors.surface2,
-    borderRadius: 8,
+    borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
     padding: spacing.sm,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   targetName: {
     color: colors.textStrong,
@@ -168,12 +168,12 @@ const styles = StyleSheet.create({
     color: colors.accentAmber,
     fontFamily: typography.family.bodySemi,
     fontSize: typography.size.xs,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
     marginTop: spacing.sm,
   },
   attributionText: {
