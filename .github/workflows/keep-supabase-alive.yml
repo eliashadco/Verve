@@ -24,7 +24,7 @@ jobs:
           URL="${SUPABASE_URL:-https://aajygxgdbkinbgdjxxpu.supabase.co}"
           KEY="${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhanlneGdkYmtpbmJnZGp4eHB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNzU0ODMsImV4cCI6MjA5Njk1MTQ4M30.T0IqoJcYhg-75IfkVvcWHB0AOOenpEr9w65NSEHGd_A}"
           
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$URL/rest/v1/" \
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$URL/auth/v1/health" \
             -H "apikey: $KEY" \
             -H "Authorization: Bearer $KEY")
             
