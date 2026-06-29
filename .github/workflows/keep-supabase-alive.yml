@@ -1,0 +1,35 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Run at 00:00 every 3 days to prevent Supabase from pausing the free tier project
+    - cron: '0 0 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase API
+        env:
+          # Using secrets is recommended, but since anon keys are public in mobile apps, 
+          # you can also hardcode them here if you prefer not to set up GitHub Secrets.
+          SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          echo "Pinging Supabase REST API to keep project active..."
+          
+          # If secrets aren't set, try falling back to the ones from .env for convenience 
+          # (only if you decide to hardcode them below, otherwise it will fail gracefully)
+          URL="${SUPABASE_URL:-https://aajygxgdbkinbgdjxxpu.supabase.co}"
+          KEY="${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhanlneGdkYmtpbmJnZGp4eHB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNzU0ODMsImV4cCI6MjA5Njk1MTQ4M30.T0IqoJcYhg-75IfkVvcWHB0AOOenpEr9w65NSEHGd_A}"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$URL/rest/v1/" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY")
+            
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "Successfully pinged Supabase (Status: $HTTP_STATUS)"
+          else
+            echo "Warning: Received status $HTTP_STATUS from Supabase"
+          fi
