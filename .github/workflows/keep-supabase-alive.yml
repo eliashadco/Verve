@@ -17,19 +17,30 @@ jobs:
           SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          echo "Pinging Supabase REST API to keep project active..."
+          echo "Pinging Supabase services to keep project active..."
           
           # If secrets aren't set, try falling back to the ones from .env for convenience 
           # (only if you decide to hardcode them below, otherwise it will fail gracefully)
           URL="${SUPABASE_URL:-https://aajygxgdbkinbgdjxxpu.supabase.co}"
           KEY="${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhanlneGdkYmtpbmJnZGp4eHB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNzU0ODMsImV4cCI6MjA5Njk1MTQ4M30.T0IqoJcYhg-75IfkVvcWHB0AOOenpEr9w65NSEHGd_A}"
           
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$URL/auth/v1/health" \
+          # 1. Ping Auth API (health check)
+          HTTP_STATUS_AUTH=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$URL/auth/v1/health" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY")
+          
+          # 2. Ping REST API (performs SELECT query on exercises table to prevent suspension)
+          HTTP_STATUS_REST=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$URL/rest/v1/exercises?select=id&limit=1" \
             -H "apikey: $KEY" \
             -H "Authorization: Bearer $KEY")
             
-          if [ "$HTTP_STATUS" -eq 200 ]; then
-            echo "Successfully pinged Supabase (Status: $HTTP_STATUS)"
+          echo "Auth API Status: $HTTP_STATUS_AUTH"
+          echo "Database REST API Status: $HTTP_STATUS_REST"
+          
+          if [ "$HTTP_STATUS_AUTH" -eq 200 ] && [ "$HTTP_STATUS_REST" -eq 200 ]; then
+            echo "Successfully pinged all Supabase services!"
           else
-            echo "Warning: Received status $HTTP_STATUS from Supabase"
+            echo "Error: One or more services returned unexpected status codes."
+            exit 1
           fi
+
